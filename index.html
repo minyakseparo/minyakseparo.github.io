@@ -152,7 +152,7 @@
 
     <!-- AREA PETUGAS -->
     <main id="petugasView" class="hide flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 bg-gray-50">
-        <div class="flex justify-between items-end mb-6"><div><h2 class="text-2xl font-black">KUNJUNGAN</h2><p class="text-sm text-gray-500 mt-1" id="tglHariIni"></p></div><button onclick="loadPetugasTasks()" class="bg-white border p-2.5 rounded-xl font-bold shadow-sm"><i class="fas fa-sync-alt text-gray-600"></i></button></div>
+        <div class="flex justify-between items-end mb-6"><div><h2 class="text-2xl font-black">KUNJUNGAN</h2><p class="text-sm text-gray-500 mt-1" id="tglHariIni"></p></div><button onclick="loadPetugasTasks(true)" class="bg-white border p-2.5 rounded-xl font-bold shadow-sm"><i class="fas fa-sync-alt text-gray-600"></i></button></div>
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-6 flex justify-around text-center divide-x"><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Target</p><h3 class="text-2xl font-black" id="taskTotal">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Selesai</p><h3 class="text-2xl font-black text-primary" id="taskSelesai">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Belum</p><h3 class="text-2xl font-black text-red-500" id="taskBelum">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Minyak</p><h3 class="text-2xl font-black text-yellow-500" id="taskMinyak">0</h3></div></div>
         <div class="mb-6 flex gap-3"><div class="relative flex-1"><i class="fas fa-search absolute left-4 top-5 text-gray-400"></i><input type="text" id="searchTask" oninput="renderTaskList()" class="w-full pl-11 p-4 bg-white border rounded-2xl" placeholder="Cari warga / kode..."></div><button onclick="bukaScanner()" class="bg-gray-900 text-white w-14 rounded-2xl shadow-lg"><i class="fas fa-qrcode text-xl"></i></button></div>
         <div id="taskList" class="space-y-4"></div><div id="noTaskMsg" class="hide text-center py-12 px-4 bg-white rounded-3xl border mt-4"><h4 class="font-black text-xl">Semua Selesai!</h4></div>
@@ -193,16 +193,28 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        async function fetchAPI(act, pay = {}) {
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({action: act, payload: pay}) });
-            return await res.json();
+        // FUNGSI FETCH YANG SUDAH DIPERBAIKI (Penambahan Headers agar tidak terblokir CORS Google)
+        async function fetchAPI(actionName, payloadData = {}, retries = 2) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action: actionName, payload: payloadData })
+                });
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, 1500)); 
+                    return fetchAPI(actionName, payloadData, retries - 1);
+                }
+                throw new Error("Gagal mengambil data. Detail: " + error.message);
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => checkSession());
         function showLoading(s) { document.getElementById('loadingOverlay').classList.toggle('hide', !s); }
         function closeModal(id) { document.getElementById(id).classList.add('hide'); }
 
-        // Mencegah Nilai Kosong/Undefined
         function setHeaderUI() {
             if(document.getElementById('userRoleDisplay') && currentUser) {
                 document.getElementById('userRoleDisplay').innerText = currentUser.Role;
@@ -223,31 +235,52 @@
                     document.getElementById('adminArea').classList.remove('hide'); 
                     document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                     
-                    // 1. Render data dari Cache (Memori HP) secara Instan (0 detik)
+                    // 1. Render data dari Cache (Memori HP)
                     const cDash = localStorage.getItem('cacheDashboard');
                     const cMast = localStorage.getItem('adminDataMaster');
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
-                    if(cDash) { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); }
-                    if(cMast) { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); }
-                    if(cMut) { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
-                    if(cJad) { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); }
+                    // Validasi agar cache tidak undefined
+                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); }
+                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); }
+                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
+                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); }
 
                     switchAdminTab('adminDashboardView', true);
 
-                    // 2. Tarik Data Terbaru dari Server Google di Latar Belakang
-                    if(!cDash || !cMut) showLoading(true);
-                    
-                    await loadAdminDashboard();
-                    await loadAdminWarga();
-                    await loadAdminMutasi();
-                    
-                    showLoading(false);
+                    // 2. Tarik Data Terbaru dari Server Google di Latar Belakang (Silent Fetch)
+                    fetchAPI('getAdminDashboard').then(res => {
+                        if(res && res.totalWarga !== undefined) {
+                            cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(res)); renderDashboard(res);
+                        }
+                    }).catch(e => {});
+
+                    fetchAPI('getAdminMasterData').then(res => {
+                        if(res && res.warga) {
+                            adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga);
+                        }
+                    }).catch(e => {});
+
+                    fetchAPI('getAdminMutasiData').then(res => {
+                        if(res && res.mutasi) {
+                            cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi);
+                        }
+                    }).catch(e => {});
+
+                    fetchAPI('getAdminJadwalData').then(res => {
+                        if(res && res.jadwal) {
+                            cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal();
+                        }
+                    }).catch(e => {});
 
                 } else {
                     document.getElementById('petugasView').classList.remove('hide'); 
-                    loadPetugasTasks();
+                    const pTasks = localStorage.getItem('petugasTasks');
+                    if(pTasks && pTasks !== "undefined") {
+                        renderTasksData(JSON.parse(pTasks));
+                    }
+                    loadPetugasTasks(); // Refresh otomatis di latar belakang
                 }
             }
         }
@@ -255,6 +288,7 @@
         async function doLogin() {
             const u = document.getElementById('username').value, p = document.getElementById('password').value;
             if(!u||!p) return showToast("Masukkan Username dan PIN!", "error");
+            
             showLoading(true);
             try {
                 const res = await fetchAPI('loginUser', {username:u, password:p});
@@ -274,18 +308,20 @@
                         document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                         switchAdminTab('adminDashboardView', true);
                         
-                        showToast("Login Berhasil! Menarik data terbaru...");
+                        showToast("Login Berhasil! Menarik data...");
                         
-                        // WAJIB panggil semua data saat login pertama kali
-                        await loadAdminDashboard();
-                        await loadAdminWarga();
-                        await loadAdminMutasi();
+                        // Menarik data awal setelah login berhasil
+                        await loadAdminDashboard(true);
+                        await loadAdminWarga(true);
+                        await loadAdminMutasi(true);
+                        await loadAdminJadwal(true);
                         
                         showLoading(false);
                     } else {
                         document.getElementById('petugasView').classList.remove('hide');
-                        await loadPetugasTasks();
+                        await loadPetugasTasks(true);
                         showLoading(false);
+                        showToast("Login Petugas Berhasil!");
                     }
                 } 
                 else { showLoading(false); showToast(res.message, "error"); }
@@ -321,10 +357,11 @@
             chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        async function loadAdminDashboard() { 
+        async function loadAdminDashboard(force = false) { 
+            if (cacheDashboard && !force) { renderDashboard(cacheDashboard); return; }
             try {
                 const res = await fetchAPI('getAdminDashboard'); 
-                if(res) {
+                if(res && res.totalWarga !== undefined) {
                     cacheDashboard = res; 
                     localStorage.setItem('cacheDashboard', JSON.stringify(res));
                     renderDashboard(res); 
@@ -332,7 +369,8 @@
             } catch(e) { console.log("Gagal memuat Dashboard"); }
         }
         
-        async function loadAdminWarga() { 
+        async function loadAdminWarga(force = false) { 
+            if (adminDataMaster && adminDataMaster.warga && adminDataMaster.warga.length > 0 && !force) { renderWarga(adminDataMaster.warga); return; }
             try {
                 const res = await fetchAPI('getAdminMasterData'); 
                 if(res && res.warga) {
@@ -343,7 +381,8 @@
             } catch(e) { console.log("Gagal memuat Master Warga"); }
         }
         
-        async function loadAdminMutasi() { 
+        async function loadAdminMutasi(force = false) { 
+            if (cacheMutasi && !force) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); return; }
             try {
                 const res = await fetchAPI('getAdminMutasiData'); 
                 if(res && res.mutasi) {
@@ -355,7 +394,8 @@
             } catch(e) { console.log("Gagal memuat Mutasi"); }
         }
 
-        async function loadAdminJadwal() { 
+        async function loadAdminJadwal(force = false) { 
+            if (cacheJadwal && !force) { applyFilterJadwal(); return; }
             try {
                 const res = await fetchAPI('getAdminJadwalData'); 
                 if(res && res.jadwal) {
@@ -412,18 +452,29 @@
         }
 
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
-        async function submitAddWarga() { const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalAddWarga'); await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp}); loadAdminWarga(); showLoading(false); showToast("Warga ditambahkan!"); }
+        async function submitAddWarga() { const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalAddWarga'); await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp}); loadAdminWarga(true); showLoading(false); showToast("Warga ditambahkan!"); }
         
         function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
-        async function submitJualMinyak() { const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; if(!b||!p) return showToast("Lengkapi form!", "error"); showLoading(true); closeModal('modalJualMinyak'); await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p}); loadAdminMutasi(); showLoading(false); showToast("Minyak berhasil dijual!"); }
+        async function submitJualMinyak() { const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; if(!b||!p) return showToast("Lengkapi form!", "error"); showLoading(true); closeModal('modalJualMinyak'); await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p}); loadAdminMutasi(true); showLoading(false); showToast("Minyak berhasil dijual!"); }
 
         function bukaModalJadwal() { if(!adminDataMaster) return showToast("Menunggu data...", "error"); const sel = document.getElementById('addPetugasJadwal'); sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); const cb = document.getElementById('listCheckboxWarga'); cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-3 border border-gray-100 rounded-xl mb-2 items-center hover:bg-green-50"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-3 w-4 h-4 text-primary"><span class="font-bold text-sm">${w.Nama_KK}</span></label>`).join(''); document.getElementById('modalAddJadwal').classList.remove('hide'); }
-        async function submitAddJadwal() { const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); showLoading(true); closeModal('modalAddJadwal'); await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds}); loadAdminJadwal(); showLoading(false); showToast("Jadwal Dibuat!"); }
+        async function submitAddJadwal() { const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); showLoading(true); closeModal('modalAddJadwal'); await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds}); loadAdminJadwal(true); showLoading(false); showToast("Jadwal Dibuat!"); }
 
         function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText=nama; document.getElementById('qrKodeWarga').innerText=kode; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=1f2937&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
 
         // ================= PETUGAS =================
-        async function loadPetugasTasks() { try{ const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); if(res.success){ currentTasks = res.tasks||[]; localStorage.setItem('petugasTasks', JSON.stringify(res)); renderTasksData(res); } } catch(e){ showToast("Gagal update jadwal", "error"); } }
+        async function loadPetugasTasks(force = false) { 
+            if(!force) showLoading(true);
+            try{ 
+                const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); 
+                if(res.success){ 
+                    currentTasks = res.tasks||[]; 
+                    localStorage.setItem('petugasTasks', JSON.stringify(res)); 
+                    renderTasksData(res); 
+                } 
+            } catch(e){ showToast("Gagal update jadwal", "error"); }
+            if(!force) showLoading(false);
+        }
         
         function renderTasksData(res) {
             if(!res || !res.success || !res.tasks || res.tasks.length === 0) { document.getElementById('noTaskMsg').classList.remove('hide'); document.getElementById('taskList').innerHTML = ''; document.getElementById('taskTotal').innerText = '0'; document.getElementById('taskSelesai').innerText = '0'; document.getElementById('taskBelum').innerText = '0'; document.getElementById('taskMinyak').innerText = '0'; return; }
@@ -444,7 +495,7 @@
         function bukaKunjungan(t) { activeKunjungan=t; document.getElementById('modalWargaNama').innerText=t.Nama_KK; document.getElementById('modalWargaAlamat').innerText=t.Alamat; document.getElementById('modalTransaksi').classList.remove('hide'); }
         function setStatus(s, el) { selectedStatus=s; document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold transition-all'); el.className='status-btn bg-green-50 border-2 border-primary text-primary py-3 rounded-2xl font-black shadow-inner scale-95 transition-all'; document.getElementById('formAmbilMinyak').classList.toggle('hide', s!=='Sudah Diambil'); }
         function kalkulasiHarga() { const b=parseFloat(document.getElementById('inputBerat').value)||0, tot=b*systemSettings.Harga_Per_Kg; document.getElementById('labelTotal').innerText='Rp'+tot.toLocaleString('id-ID'); document.getElementById('hakWarga').innerText='Rp'+(tot*(systemSettings.Persentase_Warga/100)).toLocaleString('id-ID'); document.getElementById('hakKas').innerText='Rp'+(tot*(systemSettings.Persentase_Kas/100)).toLocaleString('id-ID'); }
-        async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(); showLoading(false); showToast("Kunjungan disimpan");}
+        async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(true); showLoading(false); showToast("Kunjungan disimpan");}
 
         let html5QrcodeScanner = null;
         function bukaScanner() { document.getElementById('modalScanner').classList.remove('hide'); if(!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(onScanSuccess); } }
