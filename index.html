@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Jelantah</title>
     
-    <!-- Konfigurasi PWA -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#16a34a">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8892/8892404.png">
     
-    <!-- Library Eksternal -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -97,8 +95,7 @@
                         <h3 class="text-2xl font-extrabold text-gray-900 mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3>
                         <p class="text-sm text-gray-500 font-medium">Ringkasan performa Bank Jelantah.</p>
                     </div>
-                    <!-- TOMBOL SINKRON MANUAL -->
-                    <button onclick="syncAllData()" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Data</button>
+                    <button onclick="syncAllData()" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
                 </div>
                 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
@@ -107,7 +104,6 @@
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl sm:text-4xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
                 </div>
 
-                <!-- CHART SECTION -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
                     <div class="relative h-64 w-full"><canvas id="trendChart"></canvas></div>
@@ -118,6 +114,8 @@
                 <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
                     <div><h2 class="text-3xl font-black">Data Warga</h2></div>
                     <div class="flex gap-2">
+                        <!-- Tombol Refresh Khusus Warga -->
+                        <button onclick="forceSyncWarga()" class="bg-white border hover:bg-green-50 text-primary py-2.5 px-4 rounded-xl font-bold shadow-sm" title="Tarik Ulang Warga"><i class="fas fa-sync-alt"></i></button>
                         <button onclick="exportWarga()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-file-excel text-green-600 mr-2"></i> Ekspor</button>
                         <button onclick="bukaModalWarga()" class="bg-primary hover:bg-green-700 text-white py-2.5 px-4 rounded-xl font-bold shadow-md"><i class="fas fa-plus mr-2"></i> Tambah</button>
                     </div>
@@ -126,7 +124,13 @@
             </main>
 
             <main id="adminJadwalView" class="admin-tab hide">
-                <div class="flex justify-between items-end mb-6"><div><h2 class="text-3xl font-black">Jadwal Kunjungan</h2></div><button onclick="bukaModalJadwal()" class="bg-primary text-white py-2.5 px-5 rounded-xl font-bold shadow-md"><i class="fas fa-plus mr-2"></i> Buat</button></div>
+                <div class="flex justify-between items-end mb-6">
+                    <div><h2 class="text-3xl font-black">Jadwal Kunjungan</h2></div>
+                    <div class="flex gap-2">
+                        <button onclick="forceSyncJadwal()" class="bg-white border hover:bg-green-50 text-primary py-2.5 px-4 rounded-xl font-bold shadow-sm" title="Tarik Ulang Jadwal"><i class="fas fa-sync-alt"></i></button>
+                        <button onclick="bukaModalJadwal()" class="bg-primary text-white py-2.5 px-5 rounded-xl font-bold shadow-md"><i class="fas fa-plus mr-2"></i> Buat</button>
+                    </div>
+                </div>
                 
                 <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <input type="date" id="filterStartJadwal" onchange="applyFilterJadwal()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
@@ -141,6 +145,7 @@
                 <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
                     <div><h2 class="text-3xl font-black">Mutasi Stok</h2></div>
                     <div class="flex gap-2">
+                        <button onclick="forceSyncMutasi()" class="bg-white border hover:bg-green-50 text-primary py-2.5 px-4 rounded-xl font-bold shadow-sm" title="Tarik Ulang Mutasi"><i class="fas fa-sync-alt"></i></button>
                         <button onclick="exportMutasi()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-file-excel text-green-600 mr-2"></i> Ekspor</button>
                         <button onclick="bukaModalJual()" class="bg-gray-900 text-white py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-truck mr-2"></i> Jual</button>
                     </div>
@@ -186,8 +191,8 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // DETEKSI VERSI & AUTO-CLEAN MEMORI
-        const APP_VERSION = "v2.4_MasterSync";
+        // DETEKSI VERSI & AUTO-CLEAN MEMORI 
+        const APP_VERSION = "v2.5_InstantUI";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -206,26 +211,18 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        // FUNGSI FETCH YANG LEBIH TANGGUH DAN TIDAK BLOKIR LAYAR JIKA ERROR
-        async function fetchAPI(actionName, payloadData = {}, retries = 2) {
+        async function fetchAPI(actionName, payloadData = {}) {
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow',
                     body: JSON.stringify({ action: actionName, payload: payloadData })
                 });
-                const text = await response.text();
-                try {
-                    return JSON.parse(text);
-                } catch(err) {
-                    throw new Error("Invalid JSON");
-                }
+                return await response.json();
             } catch (error) {
-                if (retries > 0) {
-                    await new Promise(res => setTimeout(res, 2000)); // Tunggu 2 detik sebelum coba lagi
-                    return fetchAPI(actionName, payloadData, retries - 1);
-                }
-                throw error;
+                console.error("Fetch API Error:", error);
+                throw new Error("Gagal mengambil data.");
             }
         }
 
@@ -259,7 +256,6 @@
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
-                    // 1. Jika Memori Utuh, Langsung Render Tanpa Loading
                     if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsSync = true; }
                     if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsSync = true; }
                     if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsSync = true; }
@@ -267,14 +263,7 @@
 
                     switchAdminTab('adminDashboardView', true);
 
-                    // 2. Jika Memori Kosong (Misal Baru Update Versi), Lakukan Sync
-                    if(needsSync) {
-                        syncAllData();
-                    } else {
-                        // Walau Memori Penuh, Tetap Coba Refresh Data Diam-diam (Silent Update) di Latar Belakang
-                        setTimeout(()=> fetchAPI('getAdminDashboard').then(r=>{ if(r&&r.totalWarga!==undefined){cacheDashboard=r;localStorage.setItem('cacheDashboard',JSON.stringify(r));renderDashboard(r);} }).catch(e=>{}), 3000);
-                        setTimeout(()=> fetchAPI('getAdminMutasiData').then(r=>{ if(r&&r.mutasi){cacheMutasi=r;localStorage.setItem('cacheMutasi',JSON.stringify(r));applyFilterMutasi();renderChart(r.mutasi);} }).catch(e=>{}), 6000);
-                    }
+                    if(needsSync) { syncAllData(); } 
 
                 } else {
                     document.getElementById('petugasView').classList.remove('hide'); 
@@ -285,35 +274,63 @@
             }
         }
 
-        // FUNGSI SINKRONISASI MANUAL YANG AMAN DARI BLOKIR GOOGLE (Sequential/Berurutan)
+        // ================= TARIK DATA KHUSUS (TOMBOL REFRESH KECIL) =================
+        async function forceSyncWarga() {
+            showLoading(true);
+            try {
+                const res = await fetchAPI('getAdminMasterData');
+                if(res && res.warga) {
+                    adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga);
+                    showToast("Data warga disinkronkan");
+                }
+            } catch(e) { showToast("Gagal tarik data warga", "error"); }
+            showLoading(false);
+        }
+
+        async function forceSyncMutasi() {
+            showLoading(true);
+            try {
+                const res = await fetchAPI('getAdminMutasiData');
+                if(res && res.mutasi) {
+                    cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi);
+                    showToast("Data mutasi disinkronkan");
+                }
+            } catch(e) { showToast("Gagal tarik data mutasi", "error"); }
+            showLoading(false);
+        }
+
+        async function forceSyncJadwal() {
+            showLoading(true);
+            try {
+                const res = await fetchAPI('getAdminJadwalData');
+                if(res && res.jadwal) {
+                    cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal();
+                    showToast("Data jadwal disinkronkan");
+                }
+            } catch(e) { showToast("Gagal tarik data jadwal", "error"); }
+            showLoading(false);
+        }
+
         async function syncAllData() {
             showLoading(true);
-            
-            // Tarik Data 1: Dashboard
-            await fetchAPI('getAdminDashboard').then(res => {
-                if(res && res.totalWarga !== undefined) { cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(res)); renderDashboard(res); }
-            }).catch(e => console.log("Gagal sync Dashboard"));
-            
-            // Tarik Data 2: Warga
-            await fetchAPI('getAdminMasterData').then(res => {
-                if(res && res.warga) { adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga); }
-            }).catch(e => console.log("Gagal sync Warga"));
+            try {
+                const resDash = await fetchAPI('getAdminDashboard');
+                if(resDash && resDash.totalWarga !== undefined) { cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); renderDashboard(resDash); }
+                
+                const resMast = await fetchAPI('getAdminMasterData');
+                if(resMast && resMast.warga) { adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); renderWarga(resMast.warga); }
+                
+                const resMut = await fetchAPI('getAdminMutasiData');
+                if(resMut && resMut.mutasi) { cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); applyFilterMutasi(); renderChart(resMut.mutasi); }
+                
+                const resJad = await fetchAPI('getAdminJadwalData');
+                if(resJad && resJad.jadwal) { cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); applyFilterJadwal(); }
 
-            showLoading(false); // Tutup Loading Lebih Cepat agar User Bisa Bekerja
-            showToast("Data utama berhasil diperbarui. Memuat grafik...");
-
-            // Tarik Sisa Data (Mutasi & Jadwal) Diam-diam di Latar Belakang
-            setTimeout(async () => {
-                await fetchAPI('getAdminMutasiData').then(res => {
-                    if(res && res.mutasi) { cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi); }
-                }).catch(e => console.log("Gagal sync Mutasi"));
-            }, 1500);
-
-            setTimeout(async () => {
-                await fetchAPI('getAdminJadwalData').then(res => {
-                    if(res && res.jadwal) { cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal(); }
-                }).catch(e => console.log("Gagal sync Jadwal"));
-            }, 3500);
+                showToast("Semua data berhasil diperbarui!");
+            } catch(e) {
+                showToast("Gagal sinkronisasi data.", "error");
+            }
+            showLoading(false);
         }
 
         async function doLogin() {
@@ -338,17 +355,11 @@
                         document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                         switchAdminTab('adminDashboardView', true);
                         
-                        showToast("Login Berhasil! Menyiapkan area kerja...");
-                        
-                        // Memanfaatkan Data yang Terkirim Saat Login (Tidak Perlu Tarik Ulang)
-                        if(res.dashboard) {
-                            cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); renderDashboard(res.dashboard);
-                        }
-                        if(res.masterData) {
-                            adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); renderWarga(res.masterData.warga);
-                        }
+                        if(res.dashboard) { cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); renderDashboard(res.dashboard); }
+                        if(res.masterData) { adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); renderWarga(res.masterData.warga); }
 
-                        showLoading(false); // Buka layar langsung!
+                        showLoading(false); 
+                        showToast("Login Berhasil! Menyiapkan area kerja...");
 
                         // Lanjutkan Menarik Mutasi & Jadwal dengan Santai
                         setTimeout(async () => {
@@ -361,7 +372,7 @@
                             await fetchAPI('getAdminJadwalData').then(rJ => {
                                 if(rJ && rJ.jadwal) { cacheJadwal = rJ; localStorage.setItem('cacheJadwal', JSON.stringify(rJ)); applyFilterJadwal(); }
                             }).catch(e=>{});
-                        }, 3000);
+                        }, 2500);
                         
                     } else {
                         document.getElementById('petugasView').classList.remove('hide');
@@ -386,7 +397,6 @@
             const actBtn = document.getElementById('nav-'+id);
             if(actBtn) actBtn.classList.add('nav-active', 'text-primary');
             
-            // Kita tidak perlu fetch data dari Server setiap kali pindah tab karena data sudah ada di Memori (Cache)
             if(!noFetch) {
                 if(id==='adminDashboardView' && cacheDashboard) renderDashboard(cacheDashboard);
                 if(id==='adminWargaView' && adminDataMaster) renderWarga(adminDataMaster.warga);
@@ -457,25 +467,85 @@
             document.getElementById('listJadwalAdmin').innerHTML = arr.map(j => { let prog = j.Target > 0 ? Math.round((j.Selesai/j.Target)*100) : 0; return `<div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-3 hover:-translate-y-1 transition-transform"><div class="flex justify-between font-bold mb-3"><h4 class="tracking-tight text-gray-900"><i class="fas fa-calendar-day text-primary mr-2"></i>${String(j.Tanggal).slice(0,10)}</h4><span class="text-[10px] uppercase tracking-wider bg-gray-100 px-3 py-1 rounded-lg text-gray-600">${j.Status}</span></div><p class="text-sm font-medium text-gray-600 mb-4 flex items-center"><div class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs mr-2"><i class="fas fa-user"></i></div> ${j.Nama_Petugas}</p><div class="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest mb-2"><span>Progress</span><span class="text-primary">${j.Selesai}/${j.Target}</span></div><div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden"><div class="bg-primary h-2.5 rounded-full" style="width: ${prog}%"></div></div></div>`}).join('');
         }
 
+        // ================= OPTIMISTIC UI: UPDATE LANGSUNG TANPA LOADING =================
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
         async function submitAddWarga() { 
             const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; 
             if(!n||!a) return showToast("Isi form!", "error"); 
+            
             showLoading(true); closeModal('modalAddWarga'); 
+            
             try {
+                // 1. UPDATE LAYAR LANGSUNG (OPTIMISTIC)
+                let newId = "WGR-Baru";
+                if(adminDataMaster && adminDataMaster.warga) {
+                    adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0});
+                    localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
+                    if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(adminDataMaster.warga);
+                }
+                if(cacheDashboard) {
+                    cacheDashboard.totalWarga = (cacheDashboard.totalWarga || 0) + 1;
+                    localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
+                    if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard);
+                }
+
+                // 2. KIRIM KE GOOGLE
                 await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp});
-                syncAllData(); 
-            } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); }
+                showLoading(false); 
+                showToast("Warga berhasil ditambahkan!");
+
+                // 3. TARIK ID ASLI DI LATAR BELAKANG
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminMasterData');
+                        if(res && res.warga) {
+                            adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res));
+                            if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(res.warga);
+                        }
+                    } catch(err){}
+                }, 2000);
+
+            } catch(e){ 
+                showLoading(false); showToast("Gagal menyimpan data", "error"); 
+            }
         }
         
         function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
         async function submitJualMinyak() { 
             const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; 
             if(!b||!p) return showToast("Lengkapi form!", "error"); 
+            
             showLoading(true); closeModal('modalJualMinyak'); 
+            
             try {
+                // 1. UPDATE LAYAR LANGSUNG
+                if(cacheMutasi && cacheMutasi.mutasi) {
+                    cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: "Pengepul: " + p});
+                    cacheMutasi.stokTersedia -= b;
+                    localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi));
+                    if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
+                }
+                if(cacheDashboard) {
+                    cacheDashboard.stokTersedia -= b;
+                    localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
+                    if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard);
+                }
+
+                // 2. KIRIM KE GOOGLE
                 await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p});
-                syncAllData(); 
+                showLoading(false); showToast("Minyak berhasil dijual!");
+
+                // 3. TARIK DATA ASLI
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminMutasiData');
+                        if(res && res.mutasi) {
+                            cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res));
+                            if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); renderChart(res.mutasi); }
+                        }
+                    } catch(e){}
+                }, 2000);
+
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
 
@@ -484,9 +554,31 @@
             const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); 
             if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); 
             showLoading(true); closeModal('modalAddJadwal'); 
+            
             try {
+                // 1. UPDATE LAYAR
+                if(cacheJadwal && cacheJadwal.jadwal) {
+                    const petName = document.getElementById('addPetugasJadwal').options[document.getElementById('addPetugasJadwal').selectedIndex].text;
+                    cacheJadwal.jadwal.unshift({ID_Jadwal: "JDW-Baru", Tanggal: t, Nama_Petugas: petName, Status: "Berjalan", Target: wIds.length, Selesai: 0});
+                    localStorage.setItem('cacheJadwal', JSON.stringify(cacheJadwal));
+                    if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal();
+                }
+
+                // 2. KIRIM
                 await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds});
-                syncAllData();
+                showLoading(false); showToast("Jadwal Diterbitkan!");
+
+                // 3. TARIK ASLI
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminJadwalData');
+                        if(res && res.jadwal) {
+                            cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res));
+                            if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal();
+                        }
+                    } catch(e){}
+                }, 2000);
+
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
 
