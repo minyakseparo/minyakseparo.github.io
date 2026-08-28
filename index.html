@@ -89,6 +89,7 @@
         </nav>
 
         <div class="flex-1 relative overflow-y-auto custom-scrollbar pb-20 md:pb-6 p-4 sm:p-8">
+            <!-- HALAMAN DASHBOARD -->
             <main id="adminDashboardView" class="admin-tab">
                 <div class="mb-8 flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                     <div>
@@ -104,13 +105,13 @@
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl sm:text-4xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
                 </div>
 
-                <!-- KOTAK GRAFIK -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
                     <div class="relative h-64 w-full"><canvas id="trendChart"></canvas></div>
                 </div>
             </main>
 
+            <!-- HALAMAN WARGA -->
             <main id="adminWargaView" class="admin-tab hide">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
                     <div><h2 class="text-3xl font-black">Data Warga</h2></div>
@@ -123,6 +124,7 @@
                 <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] tracking-wider border-b"><tr><th class="p-5">Kode</th><th class="p-5">Nama Lengkap</th><th class="p-5">Alamat</th><th class="p-5 text-right">Saldo</th><th class="p-5 text-center">QR</th></tr></thead><tbody id="tableWarga" class="divide-y divide-gray-50"></tbody></table></div>
             </main>
 
+            <!-- HALAMAN JADWAL -->
             <main id="adminJadwalView" class="admin-tab hide">
                 <div class="flex justify-between items-end mb-6">
                     <div><h2 class="text-3xl font-black">Jadwal Kunjungan</h2></div>
@@ -141,6 +143,7 @@
                 <div id="listJadwalAdmin" class="space-y-4"></div>
             </main>
 
+            <!-- HALAMAN MUTASI STOK -->
             <main id="adminMutasiView" class="admin-tab hide">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
                     <div><h2 class="text-3xl font-black">Mutasi Stok</h2></div>
@@ -151,6 +154,16 @@
                     </div>
                 </div>
 
+                <!-- KOTAK KUNING STOK YANG KEMBALI DIMUNCULKAN AGAR TIDAK CRASH -->
+                <div class="bg-gradient-to-r from-secondary to-yellow-500 rounded-3xl p-6 sm:p-8 shadow-lg mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-yellow-900 uppercase tracking-wider opacity-80">Sisa Stok Gudang</p>
+                        <h3 class="text-5xl font-black text-gray-900 mt-1 tracking-tight"><span id="stokTersediaMutasi">0</span> <span class="text-2xl">Kg</span></h3>
+                    </div>
+                    <i class="fas fa-oil-can text-6xl opacity-20"></i>
+                </div>
+
+                <!-- FILTER DATA MUTASI -->
                 <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <input type="date" id="filterStartMutasi" onchange="applyFilterMutasi()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
                     <span class="py-2 text-gray-400 font-bold">-</span>
@@ -170,7 +183,7 @@
         <div id="taskList" class="space-y-4"></div><div id="noTaskMsg" class="hide text-center py-12 px-4 bg-white rounded-3xl border mt-4"><h4 class="font-black text-xl">Semua Selesai!</h4></div>
     </main>
 
-    <!-- MODALS -->
+    <!-- MODALS UTILITY -->
     <div id="modalAddWarga" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-6">Tambah Warga</h3><div class="space-y-4"><input type="text" id="addNamaWarga" class="w-full p-3.5 border rounded-xl" placeholder="Nama Lengkap"><input type="text" id="addAlamatWarga" class="w-full p-3.5 border rounded-xl" placeholder="Alamat Lengkap"><input type="text" id="addHpWarga" class="w-full p-3.5 border rounded-xl" placeholder="No HP/WA"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalAddWarga')" class="w-1/3 border py-3.5 rounded-xl font-bold bg-white">Batal</button><button onclick="submitAddWarga()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md">Simpan Data</button></div></div></div>
     
     <div id="modalAddJadwal" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-lg rounded-3xl p-8 flex flex-col max-h-[90vh] shadow-2xl"><h3 class="font-black text-2xl mb-6">Jadwal Baru</h3><div class="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 space-y-4"><input type="date" id="addTglJadwal" class="w-full p-3.5 border rounded-xl font-medium"><select id="addPetugasJadwal" class="w-full p-3.5 border rounded-xl font-medium"></select><div id="listCheckboxWarga" class="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto bg-white space-y-1"></div></div><div class="flex gap-3"><button onclick="closeModal('modalAddJadwal')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitAddJadwal()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md">Terbitkan</button></div></div></div>
@@ -191,8 +204,8 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // DETEKSI VERSI & AUTO-CLEAN (Wajib agar layar grafik tidak nge-blank)
-        const APP_VERSION = "v2.7_ChartFix";
+        // DETEKSI VERSI & AUTO-CLEAN (Penyelamat Memori)
+        const APP_VERSION = "v2.8_MutasiFix";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -211,7 +224,6 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        // FUNGSI FETCH DENGAN AUTO-RETRY JIKA DIBLOKIR GOOGLE
         async function fetchAPI(actionName, payloadData = {}, retries = 3) {
             try {
                 const response = await fetch(API_URL, {
@@ -219,10 +231,15 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: actionName, payload: payloadData })
                 });
-                return await response.json();
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch(err) {
+                    throw new Error("Invalid JSON");
+                }
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(res => setTimeout(res, 1500)); 
+                    await new Promise(res => setTimeout(res, 2000)); 
                     return fetchAPI(actionName, payloadData, retries - 1);
                 }
                 throw error;
@@ -264,13 +281,11 @@
                     if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); } else { needsSync = true; }
                     if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); } else { needsSync = true; }
 
-                    // WAJIB: Tampilkan Tab & Grafik Walaupun Pakai Memori Lama
                     switchAdminTab('adminDashboardView');
 
                     if(needsSync) { 
                         syncSemuaLatarBelakang(false); 
                     } else {
-                        // Cek update diam-diam jika memori ada
                         syncSemuaLatarBelakang(false);
                     }
 
@@ -283,7 +298,6 @@
             }
         }
 
-        // FUNGSI SINKRONISASI CERDAS YANG DIISOLASI (TIDAK BERHENTI KALAU ERROR SATU)
         async function syncSemuaLatarBelakang(isManual = false) {
             if(isManual) showLoading(true);
             let errorCount = 0;
@@ -293,7 +307,7 @@
                 if(resDash && resDash.totalWarga !== undefined) { cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); }
             } catch(e) { errorCount++; }
 
-            await new Promise(r => setTimeout(r, 800)); // Beri jeda ke Google
+            await new Promise(r => setTimeout(r, 800));
 
             try {
                 const resMast = await fetchAPI('getAdminMasterData');
@@ -314,7 +328,6 @@
                 if(resJad && resJad.jadwal) { cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); }
             } catch(e) { errorCount++; }
 
-            // Paksa Render Ulang Halaman yang Sedang Dibuka Saja
             const tabAktif = document.querySelector('.admin-tab:not(.hide)').id;
             switchAdminTab(tabAktif);
 
@@ -379,7 +392,6 @@
                         showLoading(false); 
                         showToast("Login Berhasil! Menyiapkan area kerja...");
 
-                        // Lanjutkan sinkronisasi sisanya di latar belakang
                         syncSemuaLatarBelakang(false);
                         
                     } else {
@@ -395,7 +407,6 @@
 
         function logout() { localStorage.clear(); location.reload(); }
 
-        // FUNGSI PEMINDAH TAB YANG SUDAH DIPERBAIKI (HANYA MENGAMBIL DARI MEMORI)
         function switchAdminTab(id) {
             document.querySelectorAll('.admin-tab').forEach(e => e.classList.add('hide'));
             document.getElementById(id).classList.remove('hide');
@@ -403,7 +414,6 @@
             const actBtn = document.getElementById('nav-'+id);
             if(actBtn) actBtn.classList.add('nav-active', 'text-primary');
             
-            // Selalu Render Ulang Komponen Saat Tab Dibuka
             if(id === 'adminDashboardView') {
                 if(cacheDashboard) renderDashboard(cacheDashboard);
                 if(cacheMutasi) renderChart(cacheMutasi.mutasi); 
@@ -416,7 +426,6 @@
             }
         }
 
-        // FUNGSI GRAFIK YANG ANTI-CRASH
         function renderChart(mutasiArr) {
             const ctx = document.getElementById('trendChart'); if(!ctx) return;
             
@@ -468,6 +477,7 @@
             XLSX.utils.book_append_sheet(wb, ws, "Mutasi"); XLSX.writeFile(wb, "Data_Mutasi_BankJelantah.xlsx");
         }
         
+        // FUNGSI FILTER MUTASI YANG SUDAH DILINDUNGI DARI CRASH
         function applyFilterMutasi() {
             if(!cacheMutasi || !cacheMutasi.mutasi) return;
             let arr = cacheMutasi.mutasi;
@@ -475,9 +485,14 @@
             if(start) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(start));
             if(end) { let e = new Date(end); e.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= e); }
             
-            document.getElementById('stokTersediaMutasi').innerText = cacheMutasi.stokTersedia;
-            if(arr.length === 0) { document.getElementById('tableMutasi').innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 font-bold">Tidak ada data transaksi.</td></tr>'; return; }
-            document.getElementById('tableMutasi').innerHTML = arr.map(m => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors"><td class="p-4 text-xs font-bold text-gray-500">${String(m.Tanggal).slice(0,10)}</td><td class="p-4"><span class="px-2 py-1 text-[10px] font-black uppercase rounded ${m.Jenis==='Masuk'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.Jenis}</span></td><td class="p-4 text-center font-black text-lg text-gray-800">${m.Jumlah_Kg}</td><td class="p-4 text-xs text-gray-500 font-medium">${m.Keterangan}</td></tr>`).join('');
+            const elStok = document.getElementById('stokTersediaMutasi');
+            if(elStok) elStok.innerText = cacheMutasi.stokTersedia || 0;
+
+            const tbody = document.getElementById('tableMutasi');
+            if(!tbody) return;
+
+            if(arr.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 font-bold">Tidak ada data transaksi.</td></tr>'; return; }
+            tbody.innerHTML = arr.map(m => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors"><td class="p-4 text-xs font-bold text-gray-500">${String(m.Tanggal).slice(0,10)}</td><td class="p-4"><span class="px-2 py-1 text-[10px] font-black uppercase rounded ${m.Jenis==='Masuk'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.Jenis}</span></td><td class="p-4 text-center font-black text-lg text-gray-800">${m.Jumlah_Kg}</td><td class="p-4 text-xs text-gray-500 font-medium">${m.Keterangan}</td></tr>`).join('');
         }
 
         function applyFilterJadwal() {
@@ -495,7 +510,9 @@
         async function submitAddWarga() { 
             const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; 
             if(!n||!a) return showToast("Isi form!", "error"); 
+            
             showLoading(true); closeModal('modalAddWarga'); 
+            
             try {
                 let newId = "WGR-Baru";
                 if(adminDataMaster && adminDataMaster.warga) {
@@ -511,16 +528,38 @@
 
                 await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp});
                 showLoading(false); showToast("Warga berhasil ditambahkan!");
-                syncSemuaLatarBelakang(false); // Update Background
 
-            } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); }
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminMasterData');
+                        if(res && res.warga) {
+                            adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res));
+                            if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(res.warga);
+                        }
+                    } catch(err){}
+                }, 2000);
+
+            } catch(e){ 
+                showLoading(false); showToast("Gagal menyimpan data", "error"); 
+            }
         }
         
-        function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
+        function bukaModalJual() { 
+            const stok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0;
+            if(stok <= 0) return showToast("Stok gudang masih kosong/0 Kg!", "error");
+            document.getElementById('infoStokJual').innerText = stok;
+            document.getElementById('modalJualMinyak').classList.remove('hide'); 
+        }
+
         async function submitJualMinyak() { 
             const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; 
             if(!b||!p) return showToast("Lengkapi form!", "error"); 
+            
+            const currentStok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0;
+            if(b > currentStok) return showToast("Jumlah jual melebihi stok!", "error");
+
             showLoading(true); closeModal('modalJualMinyak'); 
+            
             try {
                 if(cacheMutasi && cacheMutasi.mutasi) {
                     cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: "Pengepul: " + p});
@@ -536,7 +575,16 @@
 
                 await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p});
                 showLoading(false); showToast("Minyak berhasil dijual!");
-                syncSemuaLatarBelakang(false);
+
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminMutasiData');
+                        if(res && res.mutasi) {
+                            cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res));
+                            if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); }
+                        }
+                    } catch(e){}
+                }, 2000);
 
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
@@ -546,6 +594,7 @@
             const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); 
             if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); 
             showLoading(true); closeModal('modalAddJadwal'); 
+            
             try {
                 if(cacheJadwal && cacheJadwal.jadwal) {
                     const petName = document.getElementById('addPetugasJadwal').options[document.getElementById('addPetugasJadwal').selectedIndex].text;
@@ -556,7 +605,16 @@
 
                 await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds});
                 showLoading(false); showToast("Jadwal Diterbitkan!");
-                syncSemuaLatarBelakang(false);
+
+                setTimeout(async () => {
+                    try {
+                        const res = await fetchAPI('getAdminJadwalData');
+                        if(res && res.jadwal) {
+                            cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res));
+                            if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal();
+                        }
+                    } catch(e){}
+                }, 2000);
 
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
