@@ -3,12 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank Jelantah Warga</title>
+    <title>Bank Jelantah</title>
+    
+    <!-- Konfigurasi PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#16a34a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8892/8892404.png">
+    
+    <!-- Library Eksternal -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { primary: '#16a34a', secondary: '#facc15', dark: '#1f2937' } } } }
@@ -16,852 +24,282 @@
     <style>
         body { background-color: #f8fafc; overflow: hidden; }
         .hide { display: none !important; }
-        
-        /* Spinner Modern */
         .spinner { border: 4px solid rgba(22, 163, 74, 0.1); width: 44px; height: 44px; border-radius: 50%; border-left-color: #16a34a; animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Navigasi & Glassmorphism */
         .nav-active { color: #16a34a; font-weight: 800; background-color: #f0fdf4; }
-        .nav-inactive { color: #9ca3af; font-weight: 500; }
-        .nav-inactive:hover { background-color: #f9fafb; color: #4b5563; }
-        
-        .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-        
-        /* Scrollbar Premium */
+        .nav-inactive { color: #9ca3af; font-weight: 500; hover:bg-gray-50; }
+        .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Toast Animation */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-show { transform: translateX(0); opacity: 1; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-
-        #reader button { background-color: #16a34a; color: white; padding: 10px 20px; border-radius: 12px; font-weight: bold; margin-top: 10px; margin-bottom: 10px; border:none; cursor:pointer; transition: all 0.2s;}
-        #reader button:hover { background-color: #15803d; }
-        #reader a { color: #16a34a; text-decoration: none; font-weight:bold; }
     </style>
 </head>
 <body class="text-gray-800 antialiased h-screen flex flex-col">
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="fixed top-20 right-4 z-[60] flex flex-col gap-3 pointer-events-none w-72 md:w-80"></div>
+    <div id="toastContainer" class="fixed top-20 right-4 z-[60] flex flex-col gap-3 pointer-events-none w-72"></div>
+    <div id="loadingOverlay" class="hide fixed inset-0 glass-overlay z-[70] flex flex-col justify-center items-center"><div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center"><div class="spinner mb-4"></div><p class="font-bold">Memproses data...</p></div></div>
 
-    <!-- Fullscreen Loading (Hanya untuk Submit/Login agar tidak klik ganda) -->
-    <div id="loadingOverlay" class="hide fixed inset-0 glass-overlay z-[70] flex flex-col justify-center items-center">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
-            <div class="spinner mb-4"></div>
-            <p class="text-gray-800 font-bold tracking-wide">Memproses data...</p>
-        </div>
-    </div>
-
-    <!-- HEADER -->
-    <header id="appHeader" class="hide bg-white border-b border-gray-100 text-gray-800 p-4 px-6 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <div class="bg-primary/10 p-2 rounded-xl"><i class="fas fa-leaf text-primary text-xl"></i></div>
-            <div>
-                <h1 class="font-extrabold tracking-tight text-lg text-gray-900 leading-none">BANK JELANTAH</h1>
-                <p class="text-[10px] text-primary font-bold tracking-wider uppercase mt-0.5" id="userRoleDisplay">Role</p>
-            </div>
-        </div>
-        <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"><i class="fas fa-sign-out-alt text-xl"></i></button>
+    <header id="appHeader" class="hide bg-white border-b border-gray-100 p-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3"><div class="bg-primary/10 p-2 rounded-xl"><i class="fas fa-leaf text-primary"></i></div><div><h1 class="font-extrabold tracking-tight text-lg leading-none">BANK JELANTAH</h1><p class="text-[10px] text-primary font-bold uppercase" id="userRoleDisplay">Role</p></div></div>
+        <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-colors p-2"><i class="fas fa-sign-out-alt text-xl"></i></button>
     </header>
 
-    <!-- LOGIN VIEW -->
     <main id="loginView" class="flex-1 flex flex-col justify-center items-center p-6 bg-cover bg-center relative">
         <div class="absolute inset-0 bg-green-900/80 backdrop-blur-sm"></div>
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center relative z-10">
-            <div class="w-24 h-24 bg-gradient-to-br from-primary to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_10px_20px_rgba(22,163,74,0.3)]"><i class="fas fa-recycle text-5xl text-white"></i></div>
-            <h2 class="text-3xl font-black text-gray-800 mb-2 tracking-tight">BANK JELANTAH</h2>
-            <p class="text-sm text-gray-500 mb-8 font-medium">"Petugas Datang, Jelantah Terangkat, Lingkungan Sehat."</p>
-            
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center z-10">
+            <div class="w-24 h-24 bg-gradient-to-br from-primary to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-recycle text-5xl text-white"></i></div>
+            <h2 class="text-3xl font-black mb-2">BANK JELANTAH</h2>
+            <p class="text-sm text-gray-500 mb-8 font-medium">Sistem Informasi Pengelolaan Jelantah</p>
             <div class="space-y-4 text-left">
-                <div><label class="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Username</label><input type="text" id="username" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Masukkan username"></div>
-                <div><label class="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">PIN / Password</label><input type="password" id="password" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="••••"></div>
-                <button type="button" onclick="doLogin()" class="w-full bg-primary hover:bg-green-700 text-white font-extrabold py-4 rounded-xl shadow-lg transition-all mt-2">MASUK APLIKASI</button>
+                <div><label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase">Username</label><input type="text" id="username" class="w-full p-3.5 bg-gray-50 border rounded-xl outline-none focus:border-primary"></div>
+                <div><label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase">PIN</label><input type="password" id="password" class="w-full p-3.5 bg-gray-50 border rounded-xl outline-none focus:border-primary"></div>
+                <button type="button" onclick="doLogin()" class="w-full bg-primary hover:bg-green-700 text-white font-extrabold py-4 rounded-xl mt-2">MASUK APLIKASI</button>
             </div>
         </div>
     </main>
 
-    <!-- ADMIN AREA (Perubahan Struktur Desktop & Mobile) -->
     <div id="adminArea" class="hide flex-1 flex flex-col md:flex-row h-full overflow-hidden bg-[#f8fafc]">
-        
-        <!-- NAVIGASI: Bottom Nav di HP, Sidebar Kiri di Desktop -->
-        <nav class="bg-white border-t md:border-t-0 md:border-r border-gray-200 fixed md:relative bottom-0 w-full md:w-64 flex justify-around md:flex-col md:justify-start p-2 md:p-5 z-40 transition-all shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none">
-            
-            <p class="hidden md:block text-xs font-bold text-gray-400 mb-4 uppercase tracking-widest px-2">Menu Utama</p>
-            
-            <button onclick="switchAdminTab('adminDashboardView')" id="nav-adminDashboardView" class="nav-btn nav-active flex flex-col md:flex-row items-center md:items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl transition-all">
-                <i class="fas fa-home text-xl mb-1 md:mb-0 md:mr-3 md:text-lg"></i><span class="text-[10px] md:text-sm">Beranda</span>
-            </button>
-            <button onclick="switchAdminTab('adminWargaView')" id="nav-adminWargaView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center md:items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl transition-all">
-                <i class="fas fa-users text-xl mb-1 md:mb-0 md:mr-3 md:text-lg"></i><span class="text-[10px] md:text-sm">Data Warga</span>
-            </button>
-            <button onclick="switchAdminTab('adminJadwalView')" id="nav-adminJadwalView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center md:items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl transition-all">
-                <i class="fas fa-calendar-alt text-xl mb-1 md:mb-0 md:mr-3 md:text-lg"></i><span class="text-[10px] md:text-sm">Jadwal</span>
-            </button>
-            <button onclick="switchAdminTab('adminMutasiView')" id="nav-adminMutasiView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center md:items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl transition-all">
-                <i class="fas fa-exchange-alt text-xl mb-1 md:mb-0 md:mr-3 md:text-lg"></i><span class="text-[10px] md:text-sm">Mutasi</span>
-            </button>
+        <nav class="bg-white border-t md:border-r border-gray-200 fixed md:relative bottom-0 w-full md:w-64 flex justify-around md:flex-col p-2 md:p-5 z-40">
+            <p class="hidden md:block text-xs font-bold text-gray-400 mb-4 uppercase px-2">Menu Utama</p>
+            <button onclick="switchAdminTab('adminDashboardView')" id="nav-adminDashboardView" class="nav-btn nav-active flex flex-col md:flex-row items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl"><i class="fas fa-home text-xl mb-1 md:mb-0 md:mr-3"></i><span class="text-[10px] md:text-sm">Beranda</span></button>
+            <button onclick="switchAdminTab('adminWargaView')" id="nav-adminWargaView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl"><i class="fas fa-users text-xl mb-1 md:mb-0 md:mr-3"></i><span class="text-[10px] md:text-sm">Warga</span></button>
+            <button onclick="switchAdminTab('adminJadwalView')" id="nav-adminJadwalView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl"><i class="fas fa-calendar-alt text-xl mb-1 md:mb-0 md:mr-3"></i><span class="text-[10px] md:text-sm">Jadwal</span></button>
+            <button onclick="switchAdminTab('adminMutasiView')" id="nav-adminMutasiView" class="nav-btn nav-inactive flex flex-col md:flex-row items-center p-2 w-1/4 md:w-full md:p-3.5 md:mb-2 md:rounded-xl"><i class="fas fa-exchange-alt text-xl mb-1 md:mb-0 md:mr-3"></i><span class="text-[10px] md:text-sm">Mutasi</span></button>
         </nav>
 
-        <!-- KONTEN ADMIN -->
         <div class="flex-1 relative overflow-y-auto custom-scrollbar pb-20 md:pb-6 p-4 sm:p-8">
-            
             <main id="adminDashboardView" class="admin-tab">
-                <div class="mb-8">
-                    <h3 class="text-2xl font-extrabold text-gray-900 mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3>
-                    <p class="text-sm text-gray-500 font-medium">Berikut ringkasan performa Bank Jelantah hari ini.</p>
-                </div>
-                
+                <div class="mb-8"><h3 class="text-2xl font-extrabold mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3></div>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-primary to-green-600 text-white p-6 rounded-3xl shadow-[0_8px_20px_rgba(22,163,74,0.25)] relative overflow-hidden transition-transform hover:-translate-y-1">
-                        <div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-4xl font-black mt-2 tracking-tight" id="statWarga">0</h4></div>
-                        <i class="fas fa-users absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
-                    </div>
-                    <div class="bg-gradient-to-br from-secondary to-yellow-500 text-gray-900 p-6 rounded-3xl shadow-[0_8px_20px_rgba(250,204,21,0.25)] relative overflow-hidden transition-transform hover:-translate-y-1">
-                        <div class="relative z-10"><p class="text-sm font-bold opacity-90">Stok Minyak (Kg)</p><h4 class="text-4xl font-black mt-2 tracking-tight" id="statStok">0</h4></div>
-                        <i class="fas fa-oil-can absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-[0_8px_20px_rgba(59,130,246,0.25)] col-span-2 md:col-span-1 relative overflow-hidden transition-transform hover:-translate-y-1">
-                        <div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-2 tracking-tight" id="statSaldo">Rp 0</h4></div>
-                        <i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
-                    </div>
+                    <div class="bg-gradient-to-br from-primary to-green-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold">Total Warga</p><h4 class="text-4xl font-black mt-2" id="statWarga">0</h4></div><i class="fas fa-users absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
+                    <div class="bg-gradient-to-br from-secondary to-yellow-500 p-6 rounded-3xl shadow-lg relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-bold">Stok Gudang</p><h4 class="text-4xl font-black mt-2" id="statStok">0</h4></div><i class="fas fa-oil-can absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold">Total Saldo</p><h4 class="text-3xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
                 </div>
-
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h3 class="font-extrabold text-gray-800 mb-5 text-lg">Aksi Cepat</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="switchAdminTab('adminJadwalView')" class="group flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl font-bold text-gray-700 hover:bg-green-50 hover:text-primary transition-all border border-transparent hover:border-green-100"><i class="fas fa-calendar-alt text-3xl mb-3 text-gray-400 group-hover:text-primary transition-colors"></i> Kelola Jadwal</button>
-                        <button onclick="switchAdminTab('adminMutasiView')" class="group flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl font-bold text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 transition-all border border-transparent hover:border-yellow-100"><i class="fas fa-truck text-3xl mb-3 text-gray-400 group-hover:text-yellow-500 transition-colors"></i> Jual ke Pengepul</button>
-                    </div>
+                <!-- CHART SECTION -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
+                    <h3 class="font-extrabold text-gray-800 mb-4">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
+                    <div class="relative h-64 w-full"><canvas id="trendChart"></canvas></div>
                 </div>
             </main>
 
             <main id="adminWargaView" class="admin-tab hide">
-                <div class="flex justify-between items-end mb-6"><div><h2 class="text-3xl font-black text-gray-900 tracking-tight">Data Warga</h2><p class="text-gray-500 text-sm mt-1">Daftar nasabah Bank Jelantah.</p></div><button onclick="bukaModalWarga()" class="bg-primary hover:bg-green-700 text-white py-2.5 px-5 rounded-xl font-bold shadow-md transition-all flex items-center"><i class="fas fa-plus mr-2"></i> Tambah</button></div>
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left text-sm text-gray-600 whitespace-nowrap">
-                            <thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
-                                <tr><th class="p-5">Kode</th><th class="p-5">Nama Lengkap</th><th class="p-5">Alamat</th><th class="p-5 text-right">Saldo</th><th class="p-5 text-center">QR</th></tr>
-                            </thead>
-                            <tbody id="tableWarga" class="divide-y divide-gray-50"></tbody>
-                        </table>
+                <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
+                    <div><h2 class="text-3xl font-black">Data Warga</h2></div>
+                    <div class="flex gap-2">
+                        <button onclick="exportWarga()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-xl font-bold transition-all"><i class="fas fa-file-excel text-green-600 mr-2"></i> Ekspor</button>
+                        <button onclick="bukaModalWarga()" class="bg-primary hover:bg-green-700 text-white py-2.5 px-4 rounded-xl font-bold transition-all"><i class="fas fa-plus mr-2"></i> Tambah</button>
                     </div>
                 </div>
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] tracking-wider"><tr><th class="p-5">Kode</th><th class="p-5">Nama</th><th class="p-5">Alamat</th><th class="p-5 text-right">Saldo</th><th class="p-5 text-center">QR</th></tr></thead><tbody id="tableWarga" class="divide-y divide-gray-50"></tbody></table></div>
             </main>
 
             <main id="adminJadwalView" class="admin-tab hide">
-                <div class="flex justify-between items-end mb-6"><div><h2 class="text-3xl font-black text-gray-900 tracking-tight">Jadwal Kunjungan</h2><p class="text-gray-500 text-sm mt-1">Rute penjemputan petugas.</p></div><button onclick="bukaModalJadwal()" class="bg-primary hover:bg-green-700 text-white py-2.5 px-5 rounded-xl font-bold shadow-md transition-all flex items-center"><i class="fas fa-plus mr-2"></i> Buat</button></div>
+                <div class="flex justify-between items-end mb-6"><div><h2 class="text-3xl font-black">Jadwal</h2></div><button onclick="bukaModalJadwal()" class="bg-primary text-white py-2.5 px-5 rounded-xl font-bold shadow-md"><i class="fas fa-plus mr-2"></i> Buat</button></div>
+                
+                <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                    <input type="date" id="filterStartJadwal" onchange="applyFilterJadwal()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
+                    <span class="py-2 text-gray-400 font-bold">-</span>
+                    <input type="date" id="filterEndJadwal" onchange="applyFilterJadwal()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
+                </div>
+
                 <div id="listJadwalAdmin" class="space-y-4"></div>
             </main>
 
             <main id="adminMutasiView" class="admin-tab hide">
-                <div class="bg-gradient-to-r from-secondary to-yellow-500 rounded-3xl p-8 shadow-[0_8px_20px_rgba(250,204,21,0.25)] mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div><p class="text-sm font-bold text-yellow-900 uppercase tracking-wider opacity-80">Sisa Stok Gudang</p><h3 class="text-5xl font-black text-gray-900 mt-1 tracking-tight"><span id="stokTersediaMutasi">0</span> <span class="text-2xl">Kg</span></h3></div>
-                    <button onclick="bukaModalJual()" class="bg-gray-900 hover:bg-black text-white py-3 px-6 rounded-xl font-bold flex items-center shadow-lg transition-transform hover:scale-105"><i class="fas fa-truck mr-2"></i> Jual Minyak</button>
-                </div>
-                <h3 class="font-bold text-gray-800 mb-4">Riwayat Transaksi</h3>
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left text-sm text-gray-600 whitespace-nowrap">
-                            <thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
-                                <tr><th class="p-5">Tanggal</th><th class="p-5">Jenis</th><th class="p-5">Jumlah</th><th class="p-5">Keterangan</th></tr>
-                            </thead>
-                            <tbody id="tableMutasi" class="divide-y divide-gray-50"></tbody>
-                        </table>
+                <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
+                    <div><h2 class="text-3xl font-black">Mutasi Stok</h2></div>
+                    <div class="flex gap-2">
+                        <button onclick="exportMutasi()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-file-excel text-green-600 mr-2"></i> Ekspor</button>
+                        <button onclick="bukaModalJual()" class="bg-gray-900 text-white py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-truck mr-2"></i> Jual</button>
                     </div>
                 </div>
+
+                <!-- FILTER DATA -->
+                <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                    <input type="date" id="filterStartMutasi" onchange="applyFilterMutasi()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
+                    <span class="py-2 text-gray-400 font-bold">-</span>
+                    <input type="date" id="filterEndMutasi" onchange="applyFilterMutasi()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-700 font-bold uppercase text-[10px] tracking-wider"><tr><th class="p-5">Tanggal</th><th class="p-5">Jenis</th><th class="p-5">Jml(Kg)</th><th class="p-5">Keterangan</th></tr></thead><tbody id="tableMutasi" class="divide-y divide-gray-50"></tbody></table></div>
             </main>
         </div>
     </div>
 
-    <!-- AREA PETUGAS (Aplikasi Lapangan) -->
-    <main id="petugasView" class="hide flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 bg-gray-50">
-        <div class="flex justify-between items-end mb-6">
-            <div><h2 class="text-2xl font-black text-gray-900">KUNJUNGAN</h2><p class="text-sm text-gray-500 font-medium mt-1" id="tglHariIni"></p></div>
-            <button onclick="loadPetugasTasks()" class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 p-2.5 px-4 rounded-xl text-sm font-bold shadow-sm transition-all"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-6 flex justify-around text-center divide-x divide-gray-100">
-            <div class="w-1/4 px-2"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Target</p><h3 class="text-2xl font-black text-gray-800" id="taskTotal">0</h3></div>
-            <div class="w-1/4 px-2"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Selesai</p><h3 class="text-2xl font-black text-primary" id="taskSelesai">0</h3></div>
-            <div class="w-1/4 px-2"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Belum</p><h3 class="text-2xl font-black text-red-500" id="taskBelum">0</h3></div>
-            <div class="w-1/4 px-2"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Minyak</p><h3 class="text-2xl font-black text-yellow-500"><span id="taskMinyak">0</span><span class="text-xs">Kg</span></h3></div>
-        </div>
-        
-        <div class="mb-6 flex gap-3">
-            <div class="relative flex-1">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="fas fa-search text-gray-400"></i></div>
-                <input type="text" id="searchTask" oninput="renderTaskList()" class="w-full pl-11 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all font-medium text-sm" placeholder="Cari warga / kode...">
-            </div>
-            <button onclick="bukaScanner()" class="bg-gray-900 hover:bg-black text-white p-4 rounded-2xl w-14 flex items-center justify-center shadow-lg transition-transform hover:scale-105"><i class="fas fa-qrcode text-xl"></i></button>
-        </div>
-
-        <div id="taskList" class="space-y-4"></div>
-        
-        <div id="noTaskMsg" class="hide text-center py-12 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm mt-4">
-            <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-check text-2xl text-primary"></i></div>
-            <h4 class="font-black text-gray-800 text-xl tracking-tight">Semua Selesai!</h4>
-            <p class="text-gray-500 text-sm mt-2 font-medium">Kerja bagus! Tidak ada kunjungan tersisa hari ini.</p>
-        </div>
+    <!-- Area Petugas & Modals tetap disembunyikan untuk efisiensi baris (Sama seperti kode sebelumnya, letakkan block kode <main id="petugasView"> sampai <div id="dummyReader"> di sini) -->
+    <!-- PETUGAS VIEW -->
+    <main id="petugasView" class="hide flex-1 overflow-y-auto p-4 sm:p-6 pb-20 bg-gray-50">
+        <div class="flex justify-between items-end mb-6"><div><h2 class="text-2xl font-black">KUNJUNGAN</h2><p class="text-sm text-gray-500 mt-1" id="tglHariIni"></p></div><button onclick="loadPetugasTasks()" class="bg-white border p-2.5 rounded-xl font-bold"><i class="fas fa-sync-alt text-primary"></i></button></div>
+        <div class="bg-white rounded-3xl shadow-sm border p-4 mb-6 flex justify-around text-center divide-x"><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400">Target</p><h3 class="text-xl font-black" id="taskTotal">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400">Selesai</p><h3 class="text-xl font-black text-primary" id="taskSelesai">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400">Belum</p><h3 class="text-xl font-black text-red-500" id="taskBelum">0</h3></div><div class="w-1/4"><p class="text-[9px] font-bold text-gray-400">Minyak</p><h3 class="text-xl font-black text-yellow-500" id="taskMinyak">0</h3></div></div>
+        <div class="mb-4 flex gap-2"><input type="text" id="searchTask" oninput="renderTaskList()" class="w-full p-4 bg-white border rounded-2xl" placeholder="Cari warga..."><button onclick="bukaScanner()" class="bg-gray-900 text-white p-4 rounded-2xl w-14 shadow-lg"><i class="fas fa-qrcode"></i></button></div>
+        <div id="taskList" class="space-y-4"></div><div id="noTaskMsg" class="hide text-center py-12 px-4 bg-white rounded-3xl border mt-4"><h4 class="font-black text-xl">Selesai!</h4></div>
     </main>
 
-    <!-- MODALS UTILITY (Menggunakan Glassmorphism) -->
-    <div id="modalTransaksi" class="hide fixed inset-0 glass-overlay z-50 flex items-end sm:items-center justify-center p-4 sm:p-0 transition-opacity">
-        <div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto custom-scrollbar transform transition-transform shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-black text-gray-900 tracking-tight">Pengambilan</h3>
-                <button onclick="closeModal('modalTransaksi')" class="text-gray-400 hover:bg-red-50 hover:text-red-500 w-8 h-8 rounded-full transition-colors"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6 flex items-center gap-4">
-                <div class="bg-white w-12 h-12 rounded-full shadow-sm border border-gray-100 flex items-center justify-center"><i class="fas fa-home text-primary"></i></div>
-                <div><h4 class="font-black text-lg text-gray-800" id="modalWargaNama">-</h4><p class="text-xs font-bold text-gray-500" id="modalWargaAlamat">-</p></div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-3 mb-6" id="btnStatusGroup">
-                <button onclick="setStatus('Sudah Diambil', this)" class="status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-primary hover:text-primary transition-all"><i class="fas fa-check-circle block mb-1 text-xl"></i><span class="text-[10px] uppercase tracking-wider">Minyak Ada</span></button>
-                <button onclick="setStatus('Tidak Ada Minyak', this)" class="status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-red-500 hover:text-red-500 transition-all"><i class="fas fa-times-circle block mb-1 text-xl"></i><span class="text-[10px] uppercase tracking-wider">Kosong</span></button>
-                <button onclick="setStatus('Warga Tidak Ada', this)" class="status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-gray-800 hover:text-gray-800 transition-all"><i class="fas fa-door-closed block mb-1 text-xl"></i><span class="text-[10px] uppercase tracking-wider">Tak Ada Org</span></button>
-                <button onclick="setStatus('Ditunda', this)" class="status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-yellow-500 hover:text-yellow-500 transition-all"><i class="fas fa-calendar-times block mb-1 text-xl"></i><span class="text-[10px] uppercase tracking-wider">Ditunda</span></button>
-            </div>
-            
-            <div id="formAmbilMinyak" class="hide space-y-4 mb-8">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider ml-1">Berat Minyak (Kg)</label>
-                    <input type="number" step="0.1" id="inputBerat" oninput="kalkulasiHarga()" class="w-full text-4xl font-black text-center p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl text-gray-800 outline-none focus:border-yellow-400 transition-colors" placeholder="0.0">
-                </div>
-                <div class="bg-gray-900 text-white p-5 rounded-2xl shadow-inner">
-                    <p class="text-xs text-gray-400 text-center mb-1 font-medium">Estimasi Nilai (<span id="labelHarga">Rp0</span>/kg)</p>
-                    <h3 class="text-3xl font-black text-center text-secondary mb-4 tracking-tight" id="labelTotal">Rp0</h3>
-                    <div class="flex justify-between text-sm pt-4 border-t border-gray-700"><div class="w-1/2 text-center border-r border-gray-700"><span class="block text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Warga</span><strong id="hakWarga" class="text-white">Rp0</strong></div><div class="w-1/2 text-center"><span class="block text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Kas RT</span><strong id="hakKas" class="text-white">Rp0</strong></div></div>
-                </div>
-            </div>
-            <button onclick="simpanKunjungan()" class="w-full bg-primary hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg transition-transform hover:-translate-y-0.5 text-lg">SIMPAN DATA</button>
-        </div>
-    </div>
-
-    <!-- Modals Lainya dengan style Glassmorphism seragam -->
-    <div id="modalAddWarga" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 class="font-black text-2xl mb-6 text-gray-900 tracking-tight">Tambah Warga</h3>
-            <div class="space-y-4">
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Nama Warga</label><input type="text" id="addNamaWarga" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary" placeholder="Bapak / Ibu..."></div>
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Alamat (Blok/No)</label><input type="text" id="addAlamatWarga" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary" placeholder="Blok A No..."></div>
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">No Whatsapp</label><input type="text" id="addHpWarga" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary" placeholder="0812..."></div>
-            </div>
-            <div class="flex gap-3 mt-8"><button onclick="closeModal('modalAddWarga')" class="w-1/3 bg-white border border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold hover:bg-gray-50">Batal</button><button onclick="submitAddWarga()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md hover:bg-green-700">Simpan</button></div>
-        </div>
-    </div>
-
-    <div id="modalAddJadwal" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="glass-modal w-full max-w-lg rounded-3xl p-8 flex flex-col max-h-[90vh] shadow-2xl">
-            <h3 class="font-black text-2xl mb-6 text-gray-900 tracking-tight">Jadwal Baru</h3>
-            <div class="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 space-y-4">
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Tanggal Kunjungan</label><input type="date" id="addTglJadwal" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary"></div>
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Pilih Petugas</label><select id="addPetugasJadwal" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary"></select></div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2 ml-1 uppercase">Rute Warga</label>
-                    <div id="listCheckboxWarga" class="bg-gray-50 border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-2"><button onclick="closeModal('modalAddJadwal')" class="w-1/3 bg-white border border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold hover:bg-gray-50">Batal</button><button onclick="submitAddJadwal()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md hover:bg-green-700">Terbitkan Jadwal</button></div>
-        </div>
-    </div>
-
-    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h3 class="font-black text-2xl mb-2 text-gray-900 tracking-tight">Jual ke Pengepul</h3>
-            <p class="mb-6 text-sm text-gray-500 font-medium bg-yellow-50 inline-block px-3 py-1 rounded-lg border border-yellow-100">Gudang: <strong id="infoStokJual" class="text-yellow-600 font-black">0</strong> Kg</p>
-            <div class="space-y-4">
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Berat (Kg)</label><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-yellow-400" placeholder="0"></div>
-                <div><label class="block text-xs font-bold text-gray-600 mb-1 ml-1 uppercase">Nama / PT Pengepul</label><input type="text" id="addNamaPengepul" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-yellow-400" placeholder="PT... / Bpk..."></div>
-            </div>
-            <div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold hover:bg-gray-50">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white hover:bg-black py-3.5 rounded-xl font-black shadow-md">Proses Penjualan</button></div>
-        </div>
-    </div>
-
-    <div id="modalQR" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="glass-modal w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl">
-            <h3 class="font-black text-xl mb-1 text-gray-900">QR Code Warga</h3>
-            <p class="text-xs text-gray-500 mb-6">Unduh & cetak untuk warga</p>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 inline-block mx-auto">
-                <img id="qrImage" src="" class="w-48 h-48 mx-auto">
-            </div>
-            <h4 id="qrNamaWarga" class="font-black text-xl text-primary tracking-tight"></h4>
-            <p id="qrKodeWarga" class="text-sm font-bold text-gray-400 mb-6 tracking-widest"></p>
-            <button onclick="closeModal('modalQR')" class="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 py-3.5 rounded-xl font-bold transition-colors">Tutup Kartu</button>
-        </div>
-    </div>
-
-    <div id="modalScanner" class="hide fixed inset-0 bg-gray-900/95 backdrop-blur z-[80] flex flex-col items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-green-400"></div>
-            <h3 class="font-black text-xl mb-4 text-center text-gray-800 flex justify-between items-center">
-                Arahkan ke QR Code 
-                <button onclick="tutupScanner()" class="text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 w-8 h-8 rounded-full text-sm transition-colors"><i class="fas fa-times"></i></button>
-            </h3>
-            <div id="reader" class="w-full bg-black rounded-2xl overflow-hidden mb-4 min-h-[300px] border-4 border-gray-100 relative shadow-inner"></div>
-            <p class="text-center text-[11px] font-bold text-gray-400 tracking-wide uppercase mt-2"><i class="fas fa-info-circle mr-1"></i> Izinkan akses kamera browser</p>
-        </div>
-    </div>
-
-    <!-- ELEMEN PEMBANTU SCANNER -->
+    <!-- MODALS UTILITY KETIK KEMBALI SEPERTI KODE SEBELUMNYA -->
+    <div id="modalAddWarga" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-6">Tambah Warga</h3><div class="space-y-4"><input type="text" id="addNamaWarga" class="w-full p-3.5 border rounded-xl" placeholder="Nama"><input type="text" id="addAlamatWarga" class="w-full p-3.5 border rounded-xl" placeholder="Alamat"><input type="text" id="addHpWarga" class="w-full p-3.5 border rounded-xl" placeholder="No HP"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalAddWarga')" class="w-1/3 border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitAddWarga()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black">Simpan</button></div></div></div>
+    <div id="modalAddJadwal" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-lg rounded-3xl p-8 flex flex-col max-h-[90vh]"><h3 class="font-black text-2xl mb-6">Jadwal Baru</h3><div class="flex-1 overflow-y-auto mb-6"><input type="date" id="addTglJadwal" class="w-full p-3.5 border rounded-xl mb-4"><select id="addPetugasJadwal" class="w-full p-3.5 border rounded-xl mb-4"></select><div id="listCheckboxWarga" class="border rounded-xl p-3 max-h-48 overflow-y-auto bg-white"></div></div><div class="flex gap-3"><button onclick="closeModal('modalAddJadwal')" class="w-1/3 border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitAddJadwal()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black">Terbitkan</button></div></div></div>
+    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8"><h3 class="font-black text-2xl mb-2">Jual Minyak</h3><div class="space-y-4 mt-6"><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center border rounded-xl" placeholder="0 Kg"><input type="text" id="addNamaPengepul" class="w-full p-3.5 border rounded-xl" placeholder="Pengepul"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black">Proses</button></div></div></div>
+    <div id="modalTransaksi" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-6"><h3 class="text-2xl font-black mb-6">Pengambilan</h3><div class="bg-gray-50 p-4 rounded-2xl border mb-6"><h4 class="font-black text-lg" id="modalWargaNama">-</h4><p id="modalWargaAlamat" class="text-xs"></p></div><div class="grid grid-cols-2 gap-3 mb-6"><button onclick="setStatus('Sudah Diambil', this)" class="status-btn border py-3 rounded-2xl font-bold">Ada</button><button onclick="setStatus('Tidak Ada Minyak', this)" class="status-btn border py-3 rounded-2xl font-bold">Kosong</button><button onclick="setStatus('Warga Tidak Ada', this)" class="status-btn border py-3 rounded-2xl font-bold">Tak Ada Org</button><button onclick="setStatus('Ditunda', this)" class="status-btn border py-3 rounded-2xl font-bold">Tunda</button></div><div id="formAmbilMinyak" class="hide space-y-4 mb-8"><input type="number" step="0.1" id="inputBerat" oninput="kalkulasiHarga()" class="w-full text-4xl font-black text-center p-4 border-2 rounded-2xl bg-yellow-50" placeholder="0.0"><div class="bg-gray-900 text-white p-5 rounded-2xl"><h3 class="text-3xl font-black text-center text-secondary" id="labelTotal">Rp0</h3><p class="text-xs text-center mt-2">Warga: <span id="hakWarga"></span> | Kas: <span id="hakKas"></span></p></div></div><button onclick="simpanKunjungan()" class="w-full bg-primary text-white font-black py-4 rounded-2xl">SIMPAN</button></div></div>
+    <div id="modalQR" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-sm rounded-3xl p-8 text-center"><h3 class="font-black text-xl mb-6">QR Code</h3><div class="bg-white p-4 rounded-2xl border mb-6 inline-block"><img id="qrImage" src="" class="w-48 h-48 mx-auto"></div><h4 id="qrNamaWarga" class="font-black text-xl text-primary"></h4><p id="qrKodeWarga" class="text-sm font-bold text-gray-400 mb-6"></p><button onclick="closeModal('modalQR')" class="w-full bg-gray-100 py-3.5 rounded-xl font-bold">Tutup</button></div></div>
+    <div id="modalScanner" class="hide fixed inset-0 bg-gray-900/95 z-[80] flex flex-col items-center justify-center p-4"><div class="w-full max-w-md bg-white rounded-3xl p-6 relative"><h3 class="font-black text-xl mb-4 flex justify-between">Scan QR <button onclick="tutupScanner()"><i class="fas fa-times"></i></button></h3><div id="reader" class="w-full bg-black rounded-2xl min-h-[300px]"></div></div></div>
     <div id="dummyReader" class="hide"></div>
 
-    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzfvpKbuoP76ezcVYskwWL5suoGOtxtSqbVpLIMuBkOz-WtsmkmM3SbFvmfjojTUj8/exec";
-
-        let currentUser = null; let systemSettings = null; let currentTasks = [];
+        let currentUser = null, systemSettings = null, currentTasks = [];
+        let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
+        let chartInstance = null; // Variable Chart
         let activeKunjungan = null; let selectedStatus = ''; 
-        let cacheDashboard = null; let adminDataMaster = null; let cacheJadwal = null; let cacheMutasi = null;
 
-        // FUNGSI TOAST NOTIFICATION PREMIUM
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            const isSuccess = type === 'success';
-            const bgColor = isSuccess ? 'bg-white border-l-4 border-primary text-gray-800' : 'bg-white border-l-4 border-red-500 text-gray-800';
-            const iconColor = isSuccess ? 'text-primary' : 'text-red-500';
-            const icon = isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle';
-            
-            toast.className = `flex items-center p-4 mb-1 shadow-[0_10px_30px_rgba(0,0,0,0.1)] rounded-xl toast-enter ${bgColor}`;
-            toast.innerHTML = `<i class="fas ${icon} ${iconColor} mr-3 text-xl"></i><span class="font-bold text-sm leading-tight">${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            // Animasi Masuk
-            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-show'); });
-            
-            // Auto hapus setelah 3,5 detik
-            setTimeout(() => {
-                toast.classList.remove('toast-show'); toast.classList.add('toast-enter');
-                setTimeout(() => { toast.remove(); }, 400);
-            }, 3500);
+        // Registrasi Service Worker PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
         }
 
-        async function fetchAPI(actionName, payloadData = {}, retries = 2) {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action: actionName, payload: payloadData })
-                });
-                return await response.json();
-            } catch (error) {
-                if (retries > 0) {
-                    await new Promise(res => setTimeout(res, 1500)); 
-                    return fetchAPI(actionName, payloadData, retries - 1);
-                }
-                throw new Error("Gagal terhubung ke server.");
-            }
+        function showToast(msg, type='success') {
+            const cont = document.getElementById('toastContainer'); const t = document.createElement('div');
+            t.className = `flex items-center p-4 mb-2 shadow-xl rounded-xl toast-enter bg-white border-l-4 ${type==='success'?'border-primary':'border-red-500'}`;
+            t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle text-primary':'fa-exclamation-triangle text-red-500'} mr-3 text-xl"></i><span class="font-bold text-sm">${msg}</span>`;
+            cont.appendChild(t);
+            requestAnimationFrame(() => { t.classList.remove('toast-enter'); t.classList.add('toast-show'); });
+            setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const elTgl = document.getElementById('tglHariIni');
-            if(elTgl) elTgl.innerHTML = `${new Date().toLocaleDateString('id-ID', optionsDate)}`;
-            const elTglJadwal = document.getElementById('addTglJadwal');
-            if(elTglJadwal) elTglJadwal.valueAsDate = new Date();
-            
-            checkSession(); 
-        });
-
-        async function preloadMasterDataSilent() {
-            try { const res = await fetchAPI('getAdminMasterData'); adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));} catch(e){}
+        async function fetchAPI(act, pay = {}) {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({action: act, payload: pay}) });
+            return await res.json();
         }
 
-        function checkSession() {
-            const storedUser = localStorage.getItem('currentUser');
-            const storedSettings = localStorage.getItem('systemSettings');
-            
-            if (storedUser && storedSettings) {
-                currentUser = JSON.parse(storedUser);
-                systemSettings = JSON.parse(storedSettings);
-                
-                if(document.getElementById('userRoleDisplay')) document.getElementById('userRoleDisplay').innerText = currentUser.Role;
-                if(document.getElementById('labelHarga')) document.getElementById('labelHarga').innerText = 'Rp' + parseInt(systemSettings.Harga_Per_Kg).toLocaleString('id-ID');
-                if(document.getElementById('pctWarga')) document.getElementById('pctWarga').innerText = systemSettings.Persentase_Warga;
-                if(document.getElementById('pctKas')) document.getElementById('pctKas').innerText = systemSettings.Persentase_Kas;
-                
-                document.getElementById('loginView').classList.add('hide'); 
-                document.getElementById('appHeader').classList.remove('hide');
-                
-                if(currentUser.Role === 'Administrator') { 
-                    document.getElementById('adminArea').classList.remove('hide'); 
-                    document.getElementById('adminName').innerText = currentUser.Nama_Lengkap; 
-
-                    const cDash = localStorage.getItem('cacheDashboard');
-                    const cMast = localStorage.getItem('adminDataMaster');
-                    const cJad = localStorage.getItem('cacheJadwal');
-                    const cMut = localStorage.getItem('cacheMutasi');
-
-                    if(cDash) cacheDashboard = JSON.parse(cDash);
-                    if(cMast) adminDataMaster = JSON.parse(cMast);
-                    if(cJad) cacheJadwal = JSON.parse(cJad);
-                    if(cMut) cacheMutasi = JSON.parse(cMut);
-
-                    renderDashboard(cacheDashboard);
-                    renderWarga(adminDataMaster);
-
-                    switchAdminTab('adminDashboardView', true); 
-                    
-                    fetchAPI('getAdminDashboard').then(res => {
-                        if(res && res.totalWarga !== undefined) {
-                            cacheDashboard = res;
-                            localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
-                            renderDashboard(res);
-                        }
-                    }).catch(e => {});
-
-                    fetchAPI('getAdminMasterData').then(res => {
-                        if(res && res.warga) {
-                            adminDataMaster = res;
-                            localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
-                            renderWarga(res);
-                        }
-                    }).catch(e => {});
-                } 
-                else if(currentUser.Role === 'Petugas') { 
-                    document.getElementById('petugasView').classList.remove('hide'); 
-                    
-                    const pTasks = localStorage.getItem('petugasTasks');
-                    if(pTasks) {
-                        renderTasksData(JSON.parse(pTasks));
-                        fetchAPI('getPetugasTasks', { petugasId: currentUser.ID_User }).then(res => {
-                            if(res && res.success) {
-                                localStorage.setItem('petugasTasks', JSON.stringify(res));
-                                renderTasksData(res);
-                            }
-                        }).catch(e=>{});
-                    } else {
-                        loadPetugasTasks();
-                    }
-                }
-            }
-        }
-
-        function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('hide', !show); }
+        document.addEventListener("DOMContentLoaded", () => checkSession());
+        function showLoading(s) { document.getElementById('loadingOverlay').classList.toggle('hide', !s); }
         function closeModal(id) { document.getElementById(id).classList.add('hide'); }
 
-        // SKELETON LOADERS
-        function renderSkeletonTable(tbodyId) {
-            const tbody = document.getElementById(tbodyId);
-            if(!tbody) return;
-            let html = '';
-            for(let i=0; i<4; i++){
-                html += `<tr class="border-b border-gray-50"><td class="p-5"><div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div></td><td class="p-5"><div class="h-4 bg-gray-200 rounded w-32 animate-pulse"></div></td><td class="p-5"><div class="h-4 bg-gray-200 rounded w-24 animate-pulse"></div></td><td class="p-5"><div class="h-4 bg-gray-200 rounded w-20 ml-auto animate-pulse"></div></td><td class="p-5"></td></tr>`;
+        async function checkSession() {
+            const user = localStorage.getItem('currentUser');
+            if(user) {
+                currentUser = JSON.parse(user); systemSettings = JSON.parse(localStorage.getItem('systemSettings')||'{}');
+                document.getElementById('loginView').classList.add('hide'); document.getElementById('appHeader').classList.remove('hide');
+                
+                if(currentUser.Role === 'Administrator') {
+                    document.getElementById('adminArea').classList.remove('hide'); document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
+                    switchAdminTab('adminDashboardView', true);
+                    loadAdminDashboard(); loadAdminWarga(); loadAdminMutasi();
+                } else {
+                    document.getElementById('petugasView').classList.remove('hide'); loadPetugasTasks();
+                }
             }
-            tbody.innerHTML = html;
-        }
-
-        function renderSkeletonList(containerId) {
-            const cont = document.getElementById(containerId);
-            if(!cont) return;
-            let html = '';
-            for(let i=0; i<3; i++){
-                html += `<div class="bg-white p-5 rounded-2xl border border-gray-100 mb-4 animate-pulse"><div class="h-4 bg-gray-200 rounded w-32 mb-4"></div><div class="h-3 bg-gray-100 rounded w-48 mb-2"></div><div class="h-2 bg-gray-100 rounded w-full"></div></div>`;
-            }
-            cont.innerHTML = html;
-        }
-
-        function renderDashboard(data) {
-            if (!data) return;
-            if(document.getElementById('statWarga')) document.getElementById('statWarga').innerText = data.totalWarga || 0;
-            if(document.getElementById('statStok')) document.getElementById('statStok').innerText = data.stokTersedia || 0;
-            if(document.getElementById('statSaldo')) document.getElementById('statSaldo').innerText = 'Rp ' + (data.totalSaldoWarga || 0).toLocaleString('id-ID');
-        }
-
-        function renderWarga(data) {
-            if (!data || !data.warga) return;
-            const tbody = document.getElementById('tableWarga');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            data.warga.forEach(w => {
-                tbody.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-5 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-5 font-medium">${w.Nama_KK}</td><td class="p-5 text-xs text-gray-500">${w.Alamat}</td><td class="p-5 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-5 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fas fa-qrcode"></i></button></td></tr>`;
-            });
-        }
-
-        function renderJadwal(res) {
-            const container = document.getElementById('listJadwalAdmin'); 
-            container.innerHTML = ''; 
-            if(!res || !res.jadwal || res.jadwal.length === 0) { container.innerHTML = '<p class="text-gray-400 text-center py-8">Belum ada jadwal.</p>'; return;}
-            res.jadwal.forEach(j => { 
-                let progress = j.Target > 0 ? Math.round((j.Selesai / j.Target) * 100) : 0; 
-                let tglStr = new Date(j.Tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}); 
-                container.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-1"><div class="flex justify-between items-center mb-3"><h4 class="font-black text-gray-900 tracking-tight"><i class="fas fa-calendar-day mr-2 text-primary"></i> ${tglStr}</h4><span class="text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 px-3 py-1 rounded-lg border border-gray-200">${j.Status}</span></div><p class="text-sm font-medium text-gray-600 mb-4 flex items-center"><div class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs mr-2"><i class="fas fa-user"></i></div> ${j.Nama_Petugas}</p><div class="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest mb-2"><span>Progress</span><span class="text-primary">${j.Selesai}/${j.Target}</span></div><div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden"><div class="bg-primary h-2.5 rounded-full" style="width: ${progress}%"></div></div></div>`; 
-            });
-        }
-
-        function renderMutasi(res) {
-            if(!res) return;
-            document.getElementById('stokTersediaMutasi').innerText = res.stokTersedia; 
-            const tbody = document.getElementById('tableMutasi'); 
-            tbody.innerHTML = ''; 
-            if(res.mutasi.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400">Belum ada riwayat.</td></tr>'; return; }
-            res.mutasi.forEach(m => { 
-                let isMasuk = m.Jenis === 'Masuk'; let tglStr = m.Tanggal ? String(m.Tanggal).slice(0, 10) : '-'; 
-                let badgeClass = isMasuk ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200';
-                tbody.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors"><td class="p-5 text-xs font-bold text-gray-500">${tglStr}</td><td class="p-5"><span class="px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${badgeClass}">${m.Jenis}</span></td><td class="p-5 text-center font-black text-gray-800 text-lg">${m.Jumlah_Kg}</td><td class="p-5 text-xs text-gray-500 font-medium">${m.Keterangan}</td></tr>`; 
-            });
         }
 
         async function doLogin() {
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            
-            if(!user || !pass) { showToast("Masukkan Username dan PIN!", "error"); return; }
-            
-            showLoading(true); 
+            const u = document.getElementById('username').value, p = document.getElementById('password').value;
+            if(!u||!p) return showToast("Isi lengkap!", "error");
+            showLoading(true);
             try {
-                const res = await fetchAPI('loginUser', { username: user, password: pass });
-                
-                if(res.success) {
-                    currentUser = res.user; 
-                    systemSettings = res.settings; 
-                    
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    localStorage.setItem('systemSettings', JSON.stringify(systemSettings));
+                const res = await fetchAPI('loginUser', {username:u, password:p});
+                if(res.success){ localStorage.setItem('currentUser', JSON.stringify(res.user)); localStorage.setItem('systemSettings', JSON.stringify(res.settings)); checkSession(); showLoading(false); } 
+                else { showLoading(false); showToast(res.message, "error"); }
+            } catch(e){ showLoading(false); showToast("Gagal Login", "error"); }
+        }
+        function logout() { localStorage.clear(); location.reload(); }
 
-                    if(document.getElementById('userRoleDisplay')) document.getElementById('userRoleDisplay').innerText = currentUser.Role;
-                    if(document.getElementById('labelHarga')) document.getElementById('labelHarga').innerText = 'Rp' + parseInt(systemSettings.Harga_Per_Kg).toLocaleString('id-ID');
-                    if(document.getElementById('pctWarga')) document.getElementById('pctWarga').innerText = systemSettings.Persentase_Warga;
-                    if(document.getElementById('pctKas')) document.getElementById('pctKas').innerText = systemSettings.Persentase_Kas;
-                    
-                    document.getElementById('loginView').classList.add('hide'); 
-                    document.getElementById('appHeader').classList.remove('hide');
-                    showToast("Login Berhasil! Selamat Datang.");
-
-                    if(currentUser.Role === 'Administrator') { 
-                        document.getElementById('adminArea').classList.remove('hide'); 
-                        document.getElementById('adminName').innerText = currentUser.Nama_Lengkap; 
-                        
-                        cacheDashboard = res.dashboard;
-                        adminDataMaster = res.masterData;
-                        localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
-                        localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
-                        
-                        renderDashboard(cacheDashboard);
-                        renderWarga(adminDataMaster);
-                        
-                        switchAdminTab('adminDashboardView', true); 
-                        showLoading(false);
-                    } 
-                    else if(currentUser.Role === 'Petugas') { 
-                        document.getElementById('petugasView').classList.remove('hide'); 
-                        localStorage.setItem('petugasTasks', JSON.stringify(res.petugasTasks));
-                        renderTasksData(res.petugasTasks); 
-                        showLoading(false);
-                    }
-                } else {
-                    showLoading(false); showToast(res.message, "error");
-                }
-            } catch (error) { 
-                showLoading(false); showToast("Koneksi gagal. Cek internet Anda.", "error"); 
+        function switchAdminTab(id, noFetch=false) {
+            document.querySelectorAll('.admin-tab').forEach(e => e.classList.add('hide'));
+            document.getElementById(id).classList.remove('hide');
+            document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('nav-active','text-primary'); btn.classList.add('nav-inactive'); });
+            document.getElementById('nav-'+id).classList.add('nav-active', 'text-primary');
+            if(!noFetch) {
+                if(id==='adminDashboardView') loadAdminDashboard();
+                if(id==='adminWargaView') loadAdminWarga();
+                if(id==='adminJadwalView') loadAdminJadwal();
+                if(id==='adminMutasiView') loadAdminMutasi();
             }
         }
 
-        function logout() { 
-            localStorage.clear();
-            currentUser = null; cacheDashboard = null; adminDataMaster = null; cacheJadwal = null; cacheMutasi = null;
-            document.getElementById('username').value = ''; document.getElementById('password').value = ''; 
-            document.getElementById('loginView').classList.remove('hide'); 
-            document.getElementById('adminArea').classList.add('hide'); 
-            document.getElementById('petugasView').classList.add('hide'); 
-            document.getElementById('appHeader').classList.add('hide'); 
-            showToast("Berhasil Logout.");
-        }
-
-        function switchAdminTab(tabId, preventFetch = false) { 
-            document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hide')); 
-            document.getElementById(tabId).classList.remove('hide'); 
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => { 
-                btn.classList.remove('nav-active', 'text-primary'); 
-                btn.classList.add('nav-inactive'); 
-            }); 
-            let activeBtn = document.getElementById('nav-' + tabId); 
-            if(activeBtn) { activeBtn.classList.remove('nav-inactive'); activeBtn.classList.add('nav-active', 'text-primary'); } 
-            
-            if(!preventFetch) {
-                if(tabId === 'adminDashboardView') loadAdminDashboard(); 
-                else if(tabId === 'adminWargaView') loadAdminWarga(); 
-                else if(tabId === 'adminJadwalView') loadAdminJadwal(); 
-                else if(tabId === 'adminMutasiView') loadAdminMutasi(); 
-            }
-        }
-
-        async function loadAdminDashboard(force = false) { 
-            if (cacheDashboard && !force) { renderDashboard(cacheDashboard); return; }
-            try { 
-                const res = await fetchAPI('getAdminDashboard'); 
-                cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
-                renderDashboard(res); 
-            } catch(e){} 
-        }
-        
-        async function loadAdminWarga(force = false) { 
-            if (adminDataMaster && adminDataMaster.warga && adminDataMaster.warga.length > 0 && !force) { renderWarga(adminDataMaster); return; }
-            renderSkeletonTable('tableWarga');
-            try { 
-                const res = await fetchAPI('getAdminMasterData'); 
-                adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
-                renderWarga(res); 
-            } catch(e){} 
-        }
-        
-        async function loadAdminJadwal(force = false) { 
-            if (cacheJadwal && !force) { renderJadwal(cacheJadwal); return; }
-            renderSkeletonList('listJadwalAdmin');
-            try { 
-                const res = await fetchAPI('getAdminJadwalData'); 
-                cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(cacheJadwal));
-                renderJadwal(res); 
-            } catch(e){} 
-        }
-        
-        async function loadAdminMutasi(force = false) { 
-            if (cacheMutasi && !force) { renderMutasi(cacheMutasi); return; }
-            renderSkeletonTable('tableMutasi');
-            try { 
-                const res = await fetchAPI('getAdminMutasiData'); 
-                cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi));
-                renderMutasi(res); 
-            } catch(e){} 
-        }
-
-        function bukaModalWarga() { document.getElementById('addNamaWarga').value = ''; document.getElementById('addAlamatWarga').value = ''; document.getElementById('modalAddWarga').classList.remove('hide'); }
-        
-        async function submitAddWarga() { 
-            const data = { nama: document.getElementById('addNamaWarga').value, alamat: document.getElementById('addAlamatWarga').value, hp: document.getElementById('addHpWarga').value }; 
-            if(!data.nama || !data.alamat) return showToast("Mohon lengkapi formulir!", "error"); 
-            showLoading(true); closeModal('modalAddWarga'); 
-            
-            try { 
-                fetchAPI('simpanWargaBaru', data); 
-                
-                if (adminDataMaster && adminDataMaster.warga) {
-                    adminDataMaster.warga.push({
-                        Kode_Warga: "WGR-" + Math.floor(1000 + Math.random() * 9000), 
-                        Nama_KK: data.nama,
-                        Alamat: data.alamat,
-                        Saldo_Rp: 0
-                    });
-                    localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
-                }
-                if (cacheDashboard) { 
-                    cacheDashboard.totalWarga = (cacheDashboard.totalWarga || 0) + 1; 
-                    localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
-                }
-                
-                renderWarga(adminDataMaster); 
-                renderDashboard(cacheDashboard);
-                showLoading(false); 
-                showToast("Warga berhasil ditambahkan.");
-            } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); } 
-        }
-
-        function bukaModalJadwal() { 
-            if(!adminDataMaster || adminDataMaster.warga.length === 0) { showToast("Data sedang dimuat...", "error"); return; } 
-            const selectPetugas = document.getElementById('addPetugasJadwal'); selectPetugas.innerHTML = ''; 
-            adminDataMaster.petugas.forEach(p => { selectPetugas.innerHTML += `<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`; }); 
-            const listCb = document.getElementById('listCheckboxWarga'); listCb.innerHTML = ''; 
-            adminDataMaster.warga.forEach(w => { listCb.innerHTML += `<label class="flex items-center space-x-3 bg-white p-3 border border-gray-100 rounded-xl hover:bg-green-50 mb-2 cursor-pointer transition-colors"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"><div class="flex-1"><p class="text-sm font-bold text-gray-800">${w.Nama_KK}</p><p class="text-[10px] text-gray-400">${w.Alamat}</p></div></label>`; }); 
-            document.getElementById('modalAddJadwal').classList.remove('hide'); 
-        }
-        
-        async function submitAddJadwal() { 
-            const tgl = document.getElementById('addTglJadwal').value; const pId = document.getElementById('addPetugasJadwal').value; const checkboxes = document.querySelectorAll('.cb-warga:checked'); const wargaIds = Array.from(checkboxes).map(cb => cb.value); 
-            if(!tgl || !pId || wargaIds.length === 0) return showToast("Pilih petugas, tanggal, dan warga!", "error"); 
-            showLoading(true); closeModal('modalAddJadwal'); 
-            
-            try { 
-                fetchAPI('simpanJadwalBaru', { tanggal: tgl, petugasId: pId, wargaIds: wargaIds }); 
-                
-                if (cacheJadwal && cacheJadwal.jadwal) {
-                    const sel = document.getElementById('addPetugasJadwal');
-                    const namaPet = sel.options[sel.selectedIndex].text;
-                    cacheJadwal.jadwal.unshift({
-                        ID_Jadwal: "JDW-Baru", Tanggal: tgl, Nama_Petugas: namaPet, Status: "Berjalan", Target: wargaIds.length, Selesai: 0
-                    });
-                    localStorage.setItem('cacheJadwal', JSON.stringify(cacheJadwal));
-                }
-                renderJadwal(cacheJadwal);
-                showLoading(false);
-                showToast("Jadwal diterbitkan ke Petugas.");
-            } catch(e){ showLoading(false); showToast("Gagal menerbitkan jadwal", "error"); } 
-        }
-
-        function bukaModalJual() { 
-            const stok = document.getElementById('stokTersediaMutasi').innerText; 
-            if(parseFloat(stok) <= 0) return showToast("Stok gudang kosong!", "error"); 
-            document.getElementById('infoStokJual').innerText = stok; 
-            document.getElementById('modalJualMinyak').classList.remove('hide'); 
-        }
-        
-        async function submitJualMinyak() { 
-            const berat = parseFloat(document.getElementById('addBeratJual').value); 
-            const pengepul = document.getElementById('addNamaPengepul').value; 
-            if(!berat || !pengepul) return showToast("Mohon isi form dengan lengkap!", "error"); 
-            
-            const currStok = parseFloat(document.getElementById('infoStokJual').innerText);
-            if(berat > currStok) return showToast("Jumlah jual melebihi stok!", "error");
-
-            showLoading(true); closeModal('modalJualMinyak'); 
-            
-            try { 
-                fetchAPI('simpanPenjualanMinyak', { berat: berat, pengepul: pengepul }).then(res => {
-                    if(!res.success) showToast(res.message, "error"); 
-                });
-                
-                if (cacheMutasi && cacheMutasi.mutasi) {
-                    cacheMutasi.mutasi.unshift({
-                        Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: berat, Keterangan: "Pengepul: " + pengepul
-                    });
-                    cacheMutasi.stokTersedia = cacheMutasi.stokTersedia - berat;
-                    localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi));
-                }
-                if (cacheDashboard) {
-                    cacheDashboard.stokTersedia = cacheDashboard.stokTersedia - berat;
-                    localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
-                }
-                
-                renderMutasi(cacheMutasi);
-                showLoading(false);
-                showToast("Penjualan dicatat. Stok berkurang.");
-            } catch(e){ showLoading(false); showToast("Gagal menyimpan penjualan", "error"); } 
-        }
-
-        async function loadPetugasTasks() {
-            renderSkeletonList('taskList');
-            try {
-                const res = await fetchAPI('getPetugasTasks', { petugasId: currentUser.ID_User });
-                localStorage.setItem('petugasTasks', JSON.stringify(res));
-                renderTasksData(res);
-            } catch(e) { showToast("Gagal merefresh jadwal", "error"); }
-        }
-
-        function renderTasksData(res) {
-            if(!res || !res.success || !res.tasks || res.tasks.length === 0) { 
-                document.getElementById('noTaskMsg').classList.remove('hide'); 
-                document.getElementById('taskList').innerHTML = ''; 
-                document.getElementById('taskTotal').innerText = '0';
-                document.getElementById('taskSelesai').innerText = '0';
-                document.getElementById('taskBelum').innerText = '0';
-                document.getElementById('taskMinyak').innerText = '0';
-                return; 
-            }
-            document.getElementById('noTaskMsg').classList.add('hide'); 
-            currentTasks = res.tasks;
-            
-            let selesai = 0; currentTasks.forEach(task => { if(task.Status !== 'Belum Dikunjungi') selesai++; });
-            document.getElementById('taskTotal').innerText = currentTasks.length; 
-            document.getElementById('taskSelesai').innerText = selesai; 
-            document.getElementById('taskBelum').innerText = currentTasks.length - selesai;
-            
-            let currMinyak = 0;
-            if(res.totalMinyak !== undefined) { currMinyak = Number(res.totalMinyak); } 
-            else { currMinyak = parseFloat(document.getElementById('taskMinyak').innerText.replace(',', '.')) || 0; }
-            document.getElementById('taskMinyak').innerText = currMinyak % 1 === 0 ? currMinyak : currMinyak.toFixed(1);
-            
-            renderTaskList();
-        }
-
-        function renderTaskList() {
-            const container = document.getElementById('taskList'); container.innerHTML = '';
-            const searchInput = document.getElementById('searchTask'); const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-            let filteredTasks = currentTasks.filter(task => { return task.Nama_KK.toLowerCase().includes(searchTerm) || task.Kode_Warga.toLowerCase().includes(searchTerm); });
-            filteredTasks.sort((a, b) => { return (a.Status === 'Belum Dikunjungi' ? 0 : 1) - (b.Status === 'Belum Dikunjungi' ? 0 : 1); });
-            
-            if (filteredTasks.length === 0) { container.innerHTML = '<p class="text-center py-8 text-gray-400 font-bold bg-white rounded-2xl border border-dashed">Pencarian tidak ditemukan.</p>'; return; }
-            
-            filteredTasks.forEach(task => {
-                let isDone = task.Status !== 'Belum Dikunjungi';
-                let statusColor = task.Status === 'Belum Dikunjungi' ? 'bg-gray-100 text-gray-500 border-gray-200' : task.Status === 'Sudah Diambil' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200';
-                let opacity = isDone ? 'opacity-60 bg-gray-50' : 'bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03)] hover:-translate-y-0.5 transition-transform'; 
-                let border = isDone ? 'border-gray-100' : 'border-green-100 border-l-4 border-l-primary';
-                
-                container.innerHTML += `<div class="rounded-2xl p-5 border ${opacity} ${border} flex justify-between items-center"><div class="flex-1 pr-4"><span class="text-[9px] font-black uppercase tracking-wider px-2 py-1 border rounded-lg ${statusColor} mb-3 inline-block">${task.Status}</span><h4 class="font-black text-gray-900 text-lg leading-none">${task.Nama_KK}</h4><div class="text-xs font-bold text-gray-400 tracking-widest mt-1.5">${task.Kode_Warga}</div></div>${!isDone ? `<button onclick='bukaKunjungan(${JSON.stringify(task)})' class="bg-secondary hover:bg-yellow-500 text-yellow-900 px-5 py-3 rounded-xl font-black shadow-md transition-colors">BUKA</button>` : `<div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center"><i class="fas fa-check text-gray-300"></i></div>`}</div>`;
+        // FUNGSI CHART.JS
+        function renderChart(mutasiArr) {
+            const ctx = document.getElementById('trendChart'); if(!ctx) return;
+            const sums = {};
+            // Filter 7 hari terakhir masuk
+            mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => {
+                let d = String(m.Tanggal).slice(5, 10);
+                sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg);
             });
+            const lbl = Object.keys(sums).slice(0,7).reverse(); const val = Object.values(sums).slice(0,7).reverse();
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        function bukaKunjungan(task) {
-            activeKunjungan = task; document.getElementById('modalWargaNama').innerText = task.Nama_KK; document.getElementById('modalWargaAlamat').innerText = task.Kode_Warga + ' | ' + task.Alamat;
-            selectedStatus = ''; document.getElementById('inputBerat').value = ''; document.getElementById('labelTotal').innerText = 'Rp0'; document.getElementById('formAmbilMinyak').classList.add('hide');
-            document.querySelectorAll('.status-btn').forEach(btn => { btn.className = 'status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-primary hover:text-primary transition-all'; });
-            document.getElementById('modalTransaksi').classList.remove('hide');
+        async function loadAdminDashboard() { 
+            const res = await fetchAPI('getAdminDashboard'); cacheDashboard = res; 
+            document.getElementById('statWarga').innerText = res.totalWarga||0; document.getElementById('statStok').innerText = res.stokTersedia||0; document.getElementById('statSaldo').innerText = 'Rp '+(res.totalSaldoWarga||0).toLocaleString('id-ID'); 
+        }
+        
+        async function loadAdminWarga() { const res = await fetchAPI('getAdminMasterData'); adminDataMaster = res; renderWarga(res.warga); }
+        function renderWarga(arr) {
+            document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b"><td class="p-4 font-bold">${w.Kode_Warga}</td><td class="p-4">${w.Nama_KK}</td><td class="p-4 text-xs">${w.Alamat}</td><td class="p-4 text-right font-bold text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')"><i class="fas fa-qrcode text-blue-500"></i></button></td></tr>`).join('');
         }
 
-        function setStatus(status, btnElement) {
-            selectedStatus = status; 
-            document.querySelectorAll('.status-btn').forEach(btn => { btn.className = 'status-btn bg-white border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold shadow-sm hover:border-primary hover:text-primary transition-all'; });
-            if (btnElement) { btnElement.className = 'status-btn bg-green-50 border-2 border-primary text-primary py-3 rounded-2xl font-black shadow-inner transition-all scale-95'; }
-            if(status === 'Sudah Diambil') document.getElementById('formAmbilMinyak').classList.remove('hide'); else document.getElementById('formAmbilMinyak').classList.add('hide');
+        // FUNGSI EXPORT EXCEL
+        function exportWarga() {
+            if(!adminDataMaster) return showToast("Data belum siap", "error");
+            const ws = XLSX.utils.json_to_sheet(adminDataMaster.warga); const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Warga"); XLSX.writeFile(wb, "Data_Warga_BankJelantah.xlsx");
+        }
+        function exportMutasi() {
+            if(!cacheMutasi) return showToast("Data belum siap", "error");
+            const ws = XLSX.utils.json_to_sheet(cacheMutasi.mutasi); const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Mutasi"); XLSX.writeFile(wb, "Data_Mutasi_BankJelantah.xlsx");
         }
 
-        function kalkulasiHarga() {
-            if(!systemSettings) return; const berat = parseFloat(document.getElementById('inputBerat').value) || 0; const total = berat * parseInt(systemSettings.Harga_Per_Kg);
-            document.getElementById('labelTotal').innerText = 'Rp' + total.toLocaleString('id-ID'); document.getElementById('hakWarga').innerText = 'Rp' + (total * (parseInt(systemSettings.Persentase_Warga) / 100)).toLocaleString('id-ID'); document.getElementById('hakKas').innerText = 'Rp' + (total * (parseInt(systemSettings.Persentase_Kas) / 100)).toLocaleString('id-ID');
+        async function loadAdminMutasi() { const res = await fetchAPI('getAdminMutasiData'); cacheMutasi = res; applyFilterMutasi(); renderChart(res.mutasi); }
+        
+        // FUNGSI FILTER TANGGAL
+        function applyFilterMutasi() {
+            if(!cacheMutasi) return;
+            let arr = cacheMutasi.mutasi;
+            const start = document.getElementById('filterStartMutasi').value; const end = document.getElementById('filterEndMutasi').value;
+            if(start) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(start));
+            if(end) { let e = new Date(end); e.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= e); }
+            
+            document.getElementById('stokTersediaMutasi').innerText = cacheMutasi.stokTersedia;
+            document.getElementById('tableMutasi').innerHTML = arr.map(m => `<tr class="border-b"><td class="p-4 text-xs">${String(m.Tanggal).slice(0,10)}</td><td class="p-4"><span class="px-2 py-1 text-[10px] rounded ${m.Jenis==='Masuk'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.Jenis}</span></td><td class="p-4 font-bold">${m.Jumlah_Kg}</td><td class="p-4 text-xs">${m.Keterangan}</td></tr>`).join('');
         }
 
-        async function simpanKunjungan() {
-            if(!selectedStatus) return showToast("Pilih status kunjungan!", "error");
-            let berat = 0; if(selectedStatus === 'Sudah Diambil') { berat = parseFloat(document.getElementById('inputBerat').value); if(!berat || berat <= 0) return showToast("Berat minyak wajib diisi!", "error"); }
-            closeModal('modalTransaksi'); showLoading(true);
-            try {
-                const payload = { idKunjungan: activeKunjungan.ID_Kunjungan, rowIndexKunjungan: activeKunjungan._rowIndex, kodeWarga: activeKunjungan.Kode_Warga, status: selectedStatus, berat: berat };
-                
-                fetchAPI('simpanPengambilan', payload); // Silent upload
-                
-                let task = currentTasks.find(t => t.ID_Kunjungan === activeKunjungan.ID_Kunjungan);
-                if(task) task.Status = selectedStatus;
-                
-                let currMinyak = parseFloat(document.getElementById('taskMinyak').innerText.replace(',','.')) || 0;
-                if(selectedStatus === 'Sudah Diambil') currMinyak += berat;
-
-                const res = { success: true, tasks: currentTasks, totalMinyak: currMinyak };
-                localStorage.setItem('petugasTasks', JSON.stringify(res));
-                
-                renderTasksData(res);
-                showLoading(false);
-                showToast("Laporan penjemputan berhasil.");
-                
-            } catch(e){ showLoading(false); showToast("Gagal menyimpan ke server", "error"); }
+        async function loadAdminJadwal() { const res = await fetchAPI('getAdminJadwalData'); cacheJadwal = res; applyFilterJadwal(); }
+        function applyFilterJadwal() {
+            if(!cacheJadwal) return; let arr = cacheJadwal.jadwal;
+            const s = document.getElementById('filterStartJadwal').value; const e = document.getElementById('filterEndJadwal').value;
+            if(s) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(s));
+            if(e) { let ed = new Date(e); ed.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= ed); }
+            document.getElementById('listJadwalAdmin').innerHTML = arr.map(j => `<div class="bg-white p-5 rounded-2xl border mb-3"><div class="flex justify-between font-bold"><h4>${String(j.Tanggal).slice(0,10)}</h4><span class="text-xs bg-gray-100 px-2 py-1 rounded">${j.Status}</span></div><p class="text-sm mt-2">${j.Nama_Petugas}</p></div>`).join('');
         }
 
-        function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText = nama; document.getElementById('qrKodeWarga').innerText = kode; document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=1f2937&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
+        // Buka Modals Warga & Jadwal
+        function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
+        async function submitAddWarga() { const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalAddWarga'); await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp}); loadAdminWarga(); showLoading(false); showToast("Warga ditambahkan!"); }
+        
+        function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
+        async function submitJualMinyak() { const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; if(!b||!p) return showToast("Lengkapi form!", "error"); showLoading(true); closeModal('modalJualMinyak'); await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p}); loadAdminMutasi(); showLoading(false); showToast("Minyak berhasil dijual!"); }
+
+        function bukaModalJadwal() { const sel = document.getElementById('addPetugasJadwal'); sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); const cb = document.getElementById('listCheckboxWarga'); cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-2 border-b"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-2">${w.Nama_KK}</label>`).join(''); document.getElementById('modalAddJadwal').classList.remove('hide'); }
+        async function submitAddJadwal() { const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); showLoading(true); closeModal('modalAddJadwal'); await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds}); loadAdminJadwal(); showLoading(false); showToast("Jadwal Dibuat!"); }
+
+        function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText=nama; document.getElementById('qrKodeWarga').innerText=kode; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
+
+        // ================= PETUGAS =================
+        async function loadPetugasTasks() { const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); currentTasks = res.tasks||[]; renderTaskList(); }
+        function renderTaskList() { const ct = document.getElementById('taskList'); ct.innerHTML = currentTasks.map(t=>`<div class="bg-white p-4 rounded-xl border mb-3 flex justify-between"><div class="flex-1"><span class="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold">${t.Status}</span><h4 class="font-bold text-lg mt-1">${t.Nama_KK}</h4><p class="text-xs text-gray-500">${t.Kode_Warga}</p></div>${t.Status==='Belum Dikunjungi'?`<button onclick='bukaKunjungan(${JSON.stringify(t)})' class="bg-yellow-400 font-bold px-4 rounded-lg">BUKA</button>`:'<i class="fas fa-check text-green-500 text-2xl self-center"></i>'}</div>`).join(''); }
+        function bukaKunjungan(t) { activeKunjungan=t; document.getElementById('modalWargaNama').innerText=t.Nama_KK; document.getElementById('modalWargaAlamat').innerText=t.Alamat; document.getElementById('modalTransaksi').classList.remove('hide'); }
+        function setStatus(s, el) { selectedStatus=s; document.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('border-primary','text-primary')); el.classList.add('border-primary','text-primary'); document.getElementById('formAmbilMinyak').classList.toggle('hide', s!=='Sudah Diambil'); }
+        function kalkulasiHarga() { const b=parseFloat(document.getElementById('inputBerat').value)||0, tot=b*systemSettings.Harga_Per_Kg; document.getElementById('labelTotal').innerText='Rp'+tot.toLocaleString('id-ID'); }
+        async function simpanKunjungan() { if(!selectedStatus)return; let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); loadPetugasTasks(); showLoading(false); }
 
         let html5QrcodeScanner = null;
-
-        function bukaScanner() {
-            document.getElementById('modalScanner').classList.remove('hide');
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: { width: 250, height: 250 } }, false);
-                html5QrcodeScanner.render(onScanSuccess);
-            }
-        }
-
-        function tutupScanner() {
-            if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(err => console.error(err)); }
-            document.getElementById('modalScanner').classList.add('hide');
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            tutupScanner(); 
-            let targetTask = currentTasks.find(t => String(t.Kode_Warga).trim() === String(decodedText).trim() && t.Status === 'Belum Dikunjungi');
-            if (targetTask) { bukaKunjungan(targetTask); } 
-            else {
-                let checkTask = currentTasks.find(t => String(t.Kode_Warga).trim() === String(decodedText).trim());
-                if (checkTask) { showToast(`Rumah ${checkTask.Nama_KK} sudah diproses!`, "error"); } 
-                else { showToast(`Kode tidak ditemukan di jadwal Anda.`, "error"); }
-            }
-        }
+        function bukaScanner() { document.getElementById('modalScanner').classList.remove('hide'); if(!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(onScanSuccess); } }
+        function tutupScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('modalScanner').classList.add('hide'); html5QrcodeScanner=null; }
+        function onScanSuccess(t) { tutupScanner(); let f=currentTasks.find(x=>x.Kode_Warga===t && x.Status==='Belum Dikunjungi'); if(f) bukaKunjungan(f); else showToast("Warga sudah diproses/tidak ada di jadwal!", "error"); }
     </script>
 </body>
 </html>

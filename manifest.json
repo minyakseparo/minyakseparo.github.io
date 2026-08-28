@@ -1,0 +1,17 @@
+{
+  "name": "Bank Jelantah",
+  "short_name": "Jelantah",
+  "description": "Sistem Informasi Manajemen Bank Minyak Jelantah",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/8892/8892404.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
