@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Jelantah</title>
     
-    <!-- Konfigurasi PWA -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#16a34a">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8892/8892404.png">
     
-    <!-- Library Eksternal -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -44,9 +42,10 @@
     <div id="toastContainer" class="fixed top-20 right-4 z-[60] flex flex-col gap-3 pointer-events-none w-72 md:w-80"></div>
 
     <div id="loadingOverlay" class="hide fixed inset-0 glass-overlay z-[70] flex flex-col justify-center items-center">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
             <div class="spinner mb-4"></div>
             <p class="text-gray-800 font-bold tracking-wide mt-2">Menyinkronkan Data...</p>
+            <p class="text-xs text-gray-500 mt-1">Harap tunggu sebentar</p>
         </div>
     </div>
 
@@ -91,7 +90,14 @@
 
         <div class="flex-1 relative overflow-y-auto custom-scrollbar pb-20 md:pb-6 p-4 sm:p-8">
             <main id="adminDashboardView" class="admin-tab">
-                <div class="mb-8"><h3 class="text-2xl font-extrabold text-gray-900 mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3><p class="text-sm text-gray-500 font-medium">Ringkasan performa Bank Jelantah.</p></div>
+                <div class="mb-8 flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-gray-900 mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3>
+                        <p class="text-sm text-gray-500 font-medium">Ringkasan performa Bank Jelantah.</p>
+                    </div>
+                    <!-- TOMBOL SINKRON MANUAL -->
+                    <button onclick="syncAllData()" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Data</button>
+                </div>
                 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div class="bg-gradient-to-br from-primary to-green-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-4xl font-black mt-2" id="statWarga">0</h4></div><i class="fas fa-users absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
@@ -99,6 +105,7 @@
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl sm:text-4xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
                 </div>
 
+                <!-- CHART SECTION -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
                     <div class="relative h-64 w-full"><canvas id="trendChart"></canvas></div>
@@ -137,7 +144,6 @@
                     </div>
                 </div>
 
-                <!-- FILTER DATA -->
                 <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <input type="date" id="filterStartMutasi" onchange="applyFilterMutasi()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
                     <span class="py-2 text-gray-400 font-bold">-</span>
@@ -178,6 +184,13 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
+        // DETEKSI VERSI & AUTO-CLEAN (Wajib agar error 0 hilang tanpa perlu logout manual)
+        const APP_VERSION = "v2.2_AntiSpam";
+        if(localStorage.getItem('appVersion') !== APP_VERSION) {
+            localStorage.clear();
+            localStorage.setItem('appVersion', APP_VERSION);
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Registration failed.')); });
         }
@@ -191,33 +204,21 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        // FUNGSI FETCH DENGAN REDIRECT (Mencegah Google Memblokir Jalur)
-        async function fetchAPI(actionName, payloadData = {}, retries = 2) {
+        async function fetchAPI(actionName, payloadData = {}) {
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    redirect: 'follow', // INI KUNCI AGAR GOOGLE TIDAK MEMBLOKIR SAAT REFRESH
                     body: JSON.stringify({ action: actionName, payload: payloadData })
                 });
                 return await response.json();
             } catch (error) {
-                if (retries > 0) {
-                    await new Promise(res => setTimeout(res, 1500)); 
-                    return fetchAPI(actionName, payloadData, retries - 1);
-                }
-                throw new Error("Gagal mengambil data. Detail: " + error.message);
+                console.error("Fetch API Error:", error);
+                throw new Error("Gagal mengambil data. Server terlalu sibuk.");
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            // Auto Clean Memori Rusak (Jika dari Error Sebelumnya)
-            const cDash = localStorage.getItem('cacheDashboard');
-            if(cDash && (cDash === "undefined" || cDash === "null" || JSON.parse(cDash).totalWarga === 0)) {
-                localStorage.clear();
-            }
-            checkSession();
-        });
+        document.addEventListener("DOMContentLoaded", () => checkSession());
         
         function showLoading(s) { document.getElementById('loadingOverlay').classList.toggle('hide', !s); }
         function closeModal(id) { document.getElementById(id).classList.add('hide'); }
@@ -242,47 +243,22 @@
                     document.getElementById('adminArea').classList.remove('hide'); 
                     document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                     
-                    let needsFetch = false;
+                    let needsSync = false;
                     const cDash = localStorage.getItem('cacheDashboard');
                     const cMast = localStorage.getItem('adminDataMaster');
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
-                    // 1. Jika memori utuh, langsung tampilkan
-                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsFetch = true; }
-                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsFetch = true; }
-                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsFetch = true; }
-                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); } else { needsFetch = true; }
+                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsSync = true; }
+                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsSync = true; }
+                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsSync = true; }
+                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); } else { needsSync = true; }
 
                     switchAdminTab('adminDashboardView', true);
 
-                    // 2. Jika ada yang rusak/kosong, munculkan Loading dan ambil data berurutan (Sequential Fetch)
-                    if(needsFetch) showLoading(true);
-
-                    try {
-                        const resDash = await fetchAPI('getAdminDashboard');
-                        if(resDash && resDash.totalWarga !== undefined) {
-                            cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); renderDashboard(resDash);
-                        }
-
-                        const resMast = await fetchAPI('getAdminMasterData');
-                        if(resMast && resMast.warga) {
-                            adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); renderWarga(resMast.warga);
-                        }
-
-                        const resMut = await fetchAPI('getAdminMutasiData');
-                        if(resMut && resMut.mutasi) {
-                            cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); applyFilterMutasi(); renderChart(resMut.mutasi);
-                        }
-
-                        const resJad = await fetchAPI('getAdminJadwalData');
-                        if(resJad && resJad.jadwal) {
-                            cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); applyFilterJadwal();
-                        }
-                    } catch(e) {
-                        showToast("Sinkronisasi latar belakang gagal.", "error");
-                    } finally {
-                        showLoading(false);
+                    // Panggil fungsi Sinkron jika memori kosong
+                    if(needsSync) {
+                        syncAllData();
                     }
 
                 } else {
@@ -292,6 +268,40 @@
                     loadPetugasTasks();
                 }
             }
+        }
+
+        // FUNGSI SINKRONISASI BERURUTAN (ANTI-SPAM)
+        async function syncAllData() {
+            showLoading(true);
+            try {
+                const resDash = await fetchAPI('getAdminDashboard');
+                if(resDash && resDash.totalWarga !== undefined) {
+                    cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); renderDashboard(resDash);
+                }
+                await new Promise(r => setTimeout(r, 600)); // Jeda 0.6 Detik
+
+                const resMast = await fetchAPI('getAdminMasterData');
+                if(resMast && resMast.warga) {
+                    adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); renderWarga(resMast.warga);
+                }
+                await new Promise(r => setTimeout(r, 600)); // Jeda 0.6 Detik
+
+                const resMut = await fetchAPI('getAdminMutasiData');
+                if(resMut && resMut.mutasi) {
+                    cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); applyFilterMutasi(); renderChart(resMut.mutasi);
+                }
+                await new Promise(r => setTimeout(r, 600)); // Jeda 0.6 Detik
+
+                const resJad = await fetchAPI('getAdminJadwalData');
+                if(resJad && resJad.jadwal) {
+                    cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); applyFilterJadwal();
+                }
+
+                showToast("Data berhasil diperbarui!");
+            } catch(e) {
+                showToast("Sinkronisasi latar belakang terganggu.", "error");
+            }
+            showLoading(false);
         }
 
         async function doLogin() {
@@ -316,13 +326,25 @@
                         document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                         switchAdminTab('adminDashboardView', true);
                         
-                        showToast("Login Berhasil! Menarik data...");
-                        
-                        // Tarik data secara berurutan agar aman
-                        await loadAdminDashboard(true);
-                        await loadAdminWarga(true);
-                        await loadAdminMutasi(true);
-                        await loadAdminJadwal(true);
+                        showToast("Login Berhasil! Mengambil data...");
+
+                        // Trik Pro: Karena doLogin dari server sudah mengembalikan dashboard & masterData,
+                        // Kita pakai data tersebut langsung agar tidak perlu fetch ulang yang berat!
+                        if(res.dashboard) {
+                            cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); renderDashboard(res.dashboard);
+                        }
+                        if(res.masterData) {
+                            adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); renderWarga(res.masterData.warga);
+                        }
+
+                        // Tinggal ambil sisa datanya secara perlahan
+                        await new Promise(r => setTimeout(r, 800));
+                        const rMu = await fetchAPI('getAdminMutasiData');
+                        if(rMu && rMu.mutasi) { cacheMutasi = rMu; localStorage.setItem('cacheMutasi', JSON.stringify(rMu)); applyFilterMutasi(); renderChart(rMu.mutasi); }
+
+                        await new Promise(r => setTimeout(r, 800));
+                        const rJ = await fetchAPI('getAdminJadwalData');
+                        if(rJ && rJ.jadwal) { cacheJadwal = rJ; localStorage.setItem('cacheJadwal', JSON.stringify(rJ)); applyFilterJadwal(); }
                         
                         showLoading(false);
                     } else {
@@ -349,16 +371,22 @@
             if(actBtn) actBtn.classList.add('nav-active', 'text-primary');
             
             if(!noFetch) {
-                if(id==='adminDashboardView') loadAdminDashboard();
-                if(id==='adminWargaView') loadAdminWarga();
-                if(id==='adminJadwalView') loadAdminJadwal();
-                if(id==='adminMutasiView') loadAdminMutasi();
+                if(id==='adminDashboardView' && cacheDashboard) renderDashboard(cacheDashboard);
+                if(id==='adminWargaView' && adminDataMaster) renderWarga(adminDataMaster.warga);
+                if(id==='adminJadwalView' && cacheJadwal) applyFilterJadwal();
+                if(id==='adminMutasiView' && cacheMutasi) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
             }
         }
 
         function renderChart(mutasiArr) {
-            if(!mutasiArr || mutasiArr.length === 0) return;
             const ctx = document.getElementById('trendChart'); if(!ctx) return;
+            if(!mutasiArr || mutasiArr.length === 0) {
+                // Gambar grafik kosong elegan jika tidak ada data
+                if(chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, { type: 'line', data: { labels: ['Kosong'], datasets: [{ label: 'Data', data: [0], borderColor: '#cbd5e1', backgroundColor: 'rgba(203, 213, 225, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                return;
+            }
+            
             const sums = {};
             mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => {
                 let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg);
@@ -366,46 +394,6 @@
             const lbl = Object.keys(sums).slice(0,7).reverse(); const val = Object.values(sums).slice(0,7).reverse();
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-        }
-
-        async function loadAdminDashboard(force = false) { 
-            if (cacheDashboard && !force) { renderDashboard(cacheDashboard); return; }
-            try {
-                const res = await fetchAPI('getAdminDashboard'); 
-                if(res && res.totalWarga !== undefined) {
-                    cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(res)); renderDashboard(res); 
-                }
-            } catch(e) { console.log("Gagal memuat Dashboard"); }
-        }
-        
-        async function loadAdminWarga(force = false) { 
-            if (adminDataMaster && adminDataMaster.warga && adminDataMaster.warga.length > 0 && !force) { renderWarga(adminDataMaster.warga); return; }
-            try {
-                const res = await fetchAPI('getAdminMasterData'); 
-                if(res && res.warga) {
-                    adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga); 
-                }
-            } catch(e) { console.log("Gagal memuat Master Warga"); }
-        }
-        
-        async function loadAdminMutasi(force = false) { 
-            if (cacheMutasi && !force) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); return; }
-            try {
-                const res = await fetchAPI('getAdminMutasiData'); 
-                if(res && res.mutasi) {
-                    cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi); 
-                }
-            } catch(e) { console.log("Gagal memuat Mutasi"); }
-        }
-
-        async function loadAdminJadwal(force = false) { 
-            if (cacheJadwal && !force) { applyFilterJadwal(); return; }
-            try {
-                const res = await fetchAPI('getAdminJadwalData'); 
-                if(res && res.jadwal) {
-                    cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal(); 
-                }
-            } catch(e) { console.log("Gagal memuat Jadwal"); }
         }
 
         function renderDashboard(data) {
@@ -416,7 +404,7 @@
         }
 
         function renderWarga(arr) {
-            if (!arr) return;
+            if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400">Belum ada warga terdaftar.</td></tr>'; return; }
             document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-4 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-4 font-medium">${w.Nama_KK}</td><td class="p-4 text-xs text-gray-500">${w.Alamat}</td><td class="p-4 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"><i class="fas fa-qrcode"></i></button></td></tr>`).join('');
         }
 
@@ -432,7 +420,7 @@
         }
         
         function applyFilterMutasi() {
-            if(!cacheMutasi) return;
+            if(!cacheMutasi || !cacheMutasi.mutasi) return;
             let arr = cacheMutasi.mutasi;
             const start = document.getElementById('filterStartMutasi').value; const end = document.getElementById('filterEndMutasi').value;
             if(start) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(start));
@@ -444,7 +432,7 @@
         }
 
         function applyFilterJadwal() {
-            if(!cacheJadwal) return; let arr = cacheJadwal.jadwal;
+            if(!cacheJadwal || !cacheJadwal.jadwal) return; let arr = cacheJadwal.jadwal;
             const s = document.getElementById('filterStartJadwal').value; const e = document.getElementById('filterEndJadwal').value;
             if(s) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(s));
             if(e) { let ed = new Date(e); ed.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= ed); }
@@ -454,13 +442,37 @@
         }
 
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
-        async function submitAddWarga() { const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalAddWarga'); await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp}); loadAdminWarga(true); showLoading(false); showToast("Warga ditambahkan!"); }
+        async function submitAddWarga() { 
+            const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; 
+            if(!n||!a) return showToast("Isi form!", "error"); 
+            showLoading(true); closeModal('modalAddWarga'); 
+            try {
+                await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp});
+                syncAllData(); // Ambil ulang data
+            } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); }
+        }
         
         function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
-        async function submitJualMinyak() { const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; if(!b||!p) return showToast("Lengkapi form!", "error"); showLoading(true); closeModal('modalJualMinyak'); await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p}); loadAdminMutasi(true); showLoading(false); showToast("Minyak berhasil dijual!"); }
+        async function submitJualMinyak() { 
+            const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; 
+            if(!b||!p) return showToast("Lengkapi form!", "error"); 
+            showLoading(true); closeModal('modalJualMinyak'); 
+            try {
+                await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p});
+                syncAllData(); // Ambil ulang data
+            } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
+        }
 
         function bukaModalJadwal() { if(!adminDataMaster) return showToast("Menunggu data...", "error"); const sel = document.getElementById('addPetugasJadwal'); sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); const cb = document.getElementById('listCheckboxWarga'); cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-3 border border-gray-100 rounded-xl mb-2 items-center hover:bg-green-50"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-3 w-4 h-4 text-primary"><span class="font-bold text-sm">${w.Nama_KK}</span></label>`).join(''); document.getElementById('modalAddJadwal').classList.remove('hide'); }
-        async function submitAddJadwal() { const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); showLoading(true); closeModal('modalAddJadwal'); await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds}); loadAdminJadwal(true); showLoading(false); showToast("Jadwal Dibuat!"); }
+        async function submitAddJadwal() { 
+            const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); 
+            if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); 
+            showLoading(true); closeModal('modalAddJadwal'); 
+            try {
+                await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds});
+                syncAllData();
+            } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
+        }
 
         function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText=nama; document.getElementById('qrKodeWarga').innerText=kode; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=1f2937&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
 
@@ -497,7 +509,17 @@
         function bukaKunjungan(t) { activeKunjungan=t; document.getElementById('modalWargaNama').innerText=t.Nama_KK; document.getElementById('modalWargaAlamat').innerText=t.Alamat; document.getElementById('modalTransaksi').classList.remove('hide'); }
         function setStatus(s, el) { selectedStatus=s; document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold transition-all'); el.className='status-btn bg-green-50 border-2 border-primary text-primary py-3 rounded-2xl font-black shadow-inner scale-95 transition-all'; document.getElementById('formAmbilMinyak').classList.toggle('hide', s!=='Sudah Diambil'); }
         function kalkulasiHarga() { const b=parseFloat(document.getElementById('inputBerat').value)||0, tot=b*systemSettings.Harga_Per_Kg; document.getElementById('labelTotal').innerText='Rp'+tot.toLocaleString('id-ID'); document.getElementById('hakWarga').innerText='Rp'+(tot*(systemSettings.Persentase_Warga/100)).toLocaleString('id-ID'); document.getElementById('hakKas').innerText='Rp'+(tot*(systemSettings.Persentase_Kas/100)).toLocaleString('id-ID'); }
-        async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(true); showLoading(false); showToast("Kunjungan disimpan");}
+        
+        async function simpanKunjungan() { 
+            if(!selectedStatus)return showToast("Pilih status!","error"); 
+            let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } 
+            closeModal('modalTransaksi'); showLoading(true); 
+            try {
+                await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); 
+                await loadPetugasTasks(true); 
+                showLoading(false); showToast("Kunjungan disimpan");
+            } catch(e){ showLoading(false); showToast("Gagal menyimpan ke server", "error"); }
+        }
 
         let html5QrcodeScanner = null;
         function bukaScanner() { document.getElementById('modalScanner').classList.remove('hide'); if(!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(onScanSuccess); } }
