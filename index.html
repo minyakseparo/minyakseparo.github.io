@@ -114,7 +114,6 @@
                 <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 gap-3">
                     <div><h2 class="text-3xl font-black">Data Warga</h2></div>
                     <div class="flex gap-2">
-                        <!-- Tombol Refresh Khusus Warga -->
                         <button onclick="forceSyncWarga()" class="bg-white border hover:bg-green-50 text-primary py-2.5 px-4 rounded-xl font-bold shadow-sm" title="Tarik Ulang Warga"><i class="fas fa-sync-alt"></i></button>
                         <button onclick="exportWarga()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-xl font-bold"><i class="fas fa-file-excel text-green-600 mr-2"></i> Ekspor</button>
                         <button onclick="bukaModalWarga()" class="bg-primary hover:bg-green-700 text-white py-2.5 px-4 rounded-xl font-bold shadow-md"><i class="fas fa-plus mr-2"></i> Tambah</button>
@@ -191,8 +190,8 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // DETEKSI VERSI & AUTO-CLEAN MEMORI 
-        const APP_VERSION = "v2.5_InstantUI";
+        // DETEKSI VERSI & AUTO-CLEAN MEMORI
+        const APP_VERSION = "v2.6_ChartFixed";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -221,7 +220,6 @@
                 });
                 return await response.json();
             } catch (error) {
-                console.error("Fetch API Error:", error);
                 throw new Error("Gagal mengambil data.");
             }
         }
@@ -256,12 +254,14 @@
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
+                    // 1. Tampilkan Tab Dulu (Wajib agar canvas grafik punya ukuran)
+                    switchAdminTab('adminDashboardView', true);
+
+                    // 2. Render Data Jika Ada
                     if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsSync = true; }
                     if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsSync = true; }
                     if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsSync = true; }
                     if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); } else { needsSync = true; }
-
-                    switchAdminTab('adminDashboardView', true);
 
                     if(needsSync) { syncAllData(); } 
 
@@ -274,7 +274,6 @@
             }
         }
 
-        // ================= TARIK DATA KHUSUS (TOMBOL REFRESH KECIL) =================
         async function forceSyncWarga() {
             showLoading(true);
             try {
@@ -353,7 +352,7 @@
                     if(currentUser.Role === 'Administrator') {
                         document.getElementById('adminArea').classList.remove('hide');
                         document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
-                        switchAdminTab('adminDashboardView', true);
+                        switchAdminTab('adminDashboardView', true); // TAB DIBUKA SEBELUM RENDER GRAFIK
                         
                         if(res.dashboard) { cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); renderDashboard(res.dashboard); }
                         if(res.masterData) { adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); renderWarga(res.masterData.warga); }
@@ -361,7 +360,6 @@
                         showLoading(false); 
                         showToast("Login Berhasil! Menyiapkan area kerja...");
 
-                        // Lanjutkan Menarik Mutasi & Jadwal dengan Santai
                         setTimeout(async () => {
                             await fetchAPI('getAdminMutasiData').then(rMu => {
                                 if(rMu && rMu.mutasi) { cacheMutasi = rMu; localStorage.setItem('cacheMutasi', JSON.stringify(rMu)); applyFilterMutasi(); renderChart(rMu.mutasi); }
@@ -398,28 +396,45 @@
             if(actBtn) actBtn.classList.add('nav-active', 'text-primary');
             
             if(!noFetch) {
-                if(id==='adminDashboardView' && cacheDashboard) renderDashboard(cacheDashboard);
+                if(id==='adminDashboardView') {
+                    if(cacheDashboard) renderDashboard(cacheDashboard);
+                    // PANGGIL GRAFIK DI SINI KARENA TAB SUDAH TERLIHAT
+                    if(cacheMutasi) renderChart(cacheMutasi.mutasi); 
+                }
                 if(id==='adminWargaView' && adminDataMaster) renderWarga(adminDataMaster.warga);
                 if(id==='adminJadwalView' && cacheJadwal) applyFilterJadwal();
-                if(id==='adminMutasiView' && cacheMutasi) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
+                if(id==='adminMutasiView' && cacheMutasi) { applyFilterMutasi(); }
             }
         }
 
+        // FUNGSI GRAFIK YANG SUDAH KEBAL DATA KOSONG
         function renderChart(mutasiArr) {
             const ctx = document.getElementById('trendChart'); if(!ctx) return;
-            if(!mutasiArr || mutasiArr.length === 0) {
-                if(chartInstance) chartInstance.destroy();
-                chartInstance = new Chart(ctx, { type: 'line', data: { labels: ['Kosong'], datasets: [{ label: 'Belum Ada Transaksi', data: [0], borderColor: '#cbd5e1', backgroundColor: 'rgba(203, 213, 225, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-                return;
+            
+            let lbl = [];
+            let val = [];
+            
+            if(mutasiArr && mutasiArr.length > 0) {
+                const sums = {};
+                mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => {
+                    let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg);
+                });
+                lbl = Object.keys(sums).slice(0,7).reverse(); 
+                val = Object.values(sums).slice(0,7).reverse();
             }
             
-            const sums = {};
-            mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => {
-                let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg);
-            });
-            const lbl = Object.keys(sums).slice(0,7).reverse(); const val = Object.values(sums).slice(0,7).reverse();
+            // JIKA DATA MUTASI MASUK KOSONG SAMA SEKALI
+            if(lbl.length === 0) {
+                lbl = ['Belum Ada Transaksi'];
+                val = [0];
+            }
+            
             if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            chartInstance = new Chart(ctx, { 
+                type: 'line', 
+                data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, 
+                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } } } 
+            });
         }
 
         function renderDashboard(data) {
@@ -476,7 +491,6 @@
             showLoading(true); closeModal('modalAddWarga'); 
             
             try {
-                // 1. UPDATE LAYAR LANGSUNG (OPTIMISTIC)
                 let newId = "WGR-Baru";
                 if(adminDataMaster && adminDataMaster.warga) {
                     adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0});
@@ -489,12 +503,10 @@
                     if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard);
                 }
 
-                // 2. KIRIM KE GOOGLE
                 await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp});
                 showLoading(false); 
                 showToast("Warga berhasil ditambahkan!");
 
-                // 3. TARIK ID ASLI DI LATAR BELAKANG
                 setTimeout(async () => {
                     try {
                         const res = await fetchAPI('getAdminMasterData');
@@ -518,12 +530,11 @@
             showLoading(true); closeModal('modalJualMinyak'); 
             
             try {
-                // 1. UPDATE LAYAR LANGSUNG
                 if(cacheMutasi && cacheMutasi.mutasi) {
                     cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: "Pengepul: " + p});
                     cacheMutasi.stokTersedia -= b;
                     localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi));
-                    if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
+                    if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); }
                 }
                 if(cacheDashboard) {
                     cacheDashboard.stokTersedia -= b;
@@ -531,17 +542,15 @@
                     if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard);
                 }
 
-                // 2. KIRIM KE GOOGLE
                 await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p});
                 showLoading(false); showToast("Minyak berhasil dijual!");
 
-                // 3. TARIK DATA ASLI
                 setTimeout(async () => {
                     try {
                         const res = await fetchAPI('getAdminMutasiData');
                         if(res && res.mutasi) {
                             cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res));
-                            if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); renderChart(res.mutasi); }
+                            if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); }
                         }
                     } catch(e){}
                 }, 2000);
@@ -556,7 +565,6 @@
             showLoading(true); closeModal('modalAddJadwal'); 
             
             try {
-                // 1. UPDATE LAYAR
                 if(cacheJadwal && cacheJadwal.jadwal) {
                     const petName = document.getElementById('addPetugasJadwal').options[document.getElementById('addPetugasJadwal').selectedIndex].text;
                     cacheJadwal.jadwal.unshift({ID_Jadwal: "JDW-Baru", Tanggal: t, Nama_Petugas: petName, Status: "Berjalan", Target: wIds.length, Selesai: 0});
@@ -564,11 +572,9 @@
                     if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal();
                 }
 
-                // 2. KIRIM
                 await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds});
                 showLoading(false); showToast("Jadwal Diterbitkan!");
 
-                // 3. TARIK ASLI
                 setTimeout(async () => {
                     try {
                         const res = await fetchAPI('getAdminJadwalData');
