@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minyak Separo</title>
+    <title>Bank Jelantah</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#16a34a">
@@ -54,7 +54,7 @@
         <div class="flex items-center gap-3">
             <div class="bg-primary/10 p-2 rounded-xl"><i class="fas fa-leaf text-primary text-xl"></i></div>
             <div>
-                <h1 class="font-extrabold tracking-tight text-lg text-gray-900 leading-none">MINYAK SEPARO</h1>
+                <h1 class="font-extrabold tracking-tight text-lg text-gray-900 leading-none">BANK JELANTAH</h1>
                 <p class="text-[10px] text-primary font-bold tracking-wider uppercase mt-0.5" id="userRoleDisplay">Role</p>
             </div>
         </div>
@@ -66,7 +66,7 @@
         <div class="absolute inset-0 bg-green-900/80 backdrop-blur-sm"></div>
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center relative z-10">
             <div class="w-24 h-24 bg-gradient-to-br from-primary to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fas fa-recycle text-5xl text-white"></i></div>
-            <h2 class="text-3xl font-black mb-2 tracking-tight">MINYAK SEPARO</h2>
+            <h2 class="text-3xl font-black mb-2 tracking-tight">BANK JELANTAH</h2>
             <p class="text-sm text-gray-500 mb-8 font-medium">Sistem Pengelolaan Minyak Jelantah</p>
             
             <div class="space-y-4 text-left">
@@ -98,10 +98,32 @@
                     <button onclick="syncSemuaLatarBelakang(true)" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
                 </div>
                 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-primary to-green-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-4xl font-black mt-2" id="statWarga">0</h4></div><i class="fas fa-users absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
-                    <div class="bg-gradient-to-br from-secondary to-yellow-500 text-gray-900 p-6 rounded-3xl shadow-lg relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-4xl font-black mt-2" id="statStok">0</h4></div><i class="fas fa-oil-can absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl sm:text-4xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
+                <!-- GRID DIPERBARUI: DARI 3 KOLOM MENJADI 4 KOLOM -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <!-- Kartu 1: Warga -->
+                    <div class="bg-gradient-to-br from-primary to-green-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-4xl font-black mt-2" id="statWarga">0</h4></div>
+                        <i class="fas fa-users absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 2: Stok -->
+                    <div class="bg-gradient-to-br from-secondary to-yellow-500 text-gray-900 p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10"><p class="text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-4xl font-black mt-2" id="statStok">0</h4></div>
+                        <i class="fas fa-oil-can absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 3: Saldo -->
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl lg:text-2xl xl:text-3xl font-black mt-2 truncate" id="statSaldo">Rp 0</h4></div>
+                        <i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 4: Top Contributor / Paling Banyak -->
+                    <div class="bg-gradient-to-br from-pink-500 to-rose-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-sm font-semibold opacity-90"><i class="fas fa-crown text-yellow-300 mr-1"></i> Top Warga</p>
+                            <h4 class="text-2xl font-black mt-2 truncate" id="topWargaNama" title="Memuat...">-</h4>
+                            <p class="text-[11px] font-medium opacity-90 mt-1 uppercase tracking-wider">Terkumpul: <span id="topWargaJumlah" class="font-bold text-base">0</span> Kg</p>
+                        </div>
+                        <i class="fas fa-award absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                    </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
@@ -198,19 +220,16 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // DETEKSI VERSI & AUTO-CLEAN (Mereset memori rusak dari versi sebelumnya)
-        const APP_VERSION = "v3.0_AntiLoading";
+        // DETEKSI VERSI
+        const APP_VERSION = "v3.1_TopWarga";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
         }
 
-        // PEMBUNUH BUG SERVICE WORKER (Wajib agar tidak nyangkut di Loading)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
+                for(let registration of registrations) { registration.unregister(); }
             });
         }
 
@@ -247,6 +266,51 @@
         function setHeaderUI() {
             if(document.getElementById('userRoleDisplay') && currentUser) {
                 document.getElementById('userRoleDisplay').innerText = currentUser.Role;
+            }
+        }
+
+        // FUNGSI PENGHITUNG PENYUMBANG TERBANYAK (DIPANGGIL OTOMATIS)
+        function updateTopContributorUI(arrWarga) {
+            const elNama = document.getElementById('topWargaNama');
+            const elJml = document.getElementById('topWargaJumlah');
+            if (!elNama || !elJml) return;
+
+            if (!arrWarga || arrWarga.length === 0) {
+                elNama.innerText = 'Belum Ada';
+                elJml.innerText = '0';
+                return;
+            }
+
+            let maxVal = -1;
+            let topName = '-';
+
+            arrWarga.forEach(w => {
+                let val = parseFloat(w.Total_Minyak_Kg);
+                
+                // Fallback (Jaga-jaga jika backend tidak mengirim Total_Minyak_Kg, kita hitung dari saldo)
+                if(isNaN(val)) {
+                    if(systemSettings && systemSettings.Harga_Per_Kg && systemSettings.Persentase_Warga) {
+                        let harga = parseFloat(systemSettings.Harga_Per_Kg) || 1;
+                        let persen = parseFloat(systemSettings.Persentase_Warga) || 100;
+                        let saldo = parseFloat(w.Saldo_Rp) || 0;
+                        val = saldo / (harga * (persen / 100));
+                    } else {
+                        val = parseFloat(w.Saldo_Rp) || 0; 
+                    }
+                }
+                
+                if (val > maxVal) {
+                    maxVal = val;
+                    topName = w.Nama_KK;
+                }
+            });
+
+            if(maxVal <= 0) {
+                elNama.innerText = 'Belum Ada';
+                elJml.innerText = '0';
+            } else {
+                elNama.innerText = topName;
+                elJml.innerText = parseFloat(maxVal.toFixed(2));
             }
         }
 
@@ -386,10 +450,7 @@
                     }
                 } 
                 else { showLoading(false); showToast(res.message, "error"); }
-            } catch(e){ 
-                showLoading(false); 
-                showToast("Koneksi gagal. Coba lagi.", "error"); 
-            }
+            } catch(e){ showLoading(false); showToast("Koneksi gagal. Memulai ulang...", "error"); }
         }
 
         function logout() { localStorage.clear(); location.reload(); }
@@ -404,6 +465,8 @@
             if(id === 'adminDashboardView') {
                 if(cacheDashboard) renderDashboard(cacheDashboard);
                 if(cacheMutasi) renderChart(cacheMutasi.mutasi); 
+                // Render Top Warga di Dashboard
+                if(adminDataMaster) updateTopContributorUI(adminDataMaster.warga);
             } else if(id === 'adminWargaView') {
                 if(adminDataMaster) renderWarga(adminDataMaster.warga);
             } else if(id === 'adminJadwalView') {
@@ -449,6 +512,9 @@
         }
 
         function renderWarga(arr) {
+            // Update Top Warga Card sekalian setiap data Warga dimuat
+            updateTopContributorUI(arr);
+
             if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400 font-bold">Belum ada warga terdaftar.</td></tr>'; return; }
             document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-4 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-4 font-medium">${w.Nama_KK}</td><td class="p-4 text-xs text-gray-500">${w.Alamat}</td><td class="p-4 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"><i class="fas fa-qrcode"></i></button></td></tr>`).join('');
         }
@@ -497,7 +563,7 @@
             try {
                 let newId = "WGR-Baru";
                 if(adminDataMaster && adminDataMaster.warga) {
-                    adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0});
+                    adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0, Total_Minyak_Kg: 0});
                     localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
                     if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(adminDataMaster.warga);
                 }
@@ -516,11 +582,20 @@
             }
         }
         
-        function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
+        function bukaModalJual() { 
+            const stok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0;
+            if(stok <= 0) return showToast("Stok gudang masih kosong/0 Kg!", "error");
+            document.getElementById('infoStokJual').innerText = stok;
+            document.getElementById('modalJualMinyak').classList.remove('hide'); 
+        }
+
         async function submitJualMinyak() { 
             const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; 
             if(!b||!p) return showToast("Lengkapi form!", "error"); 
             
+            const currentStok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0;
+            if(b > currentStok) return showToast("Jumlah jual melebihi stok!", "error");
+
             showLoading(true); closeModal('modalJualMinyak'); 
             
             try {
