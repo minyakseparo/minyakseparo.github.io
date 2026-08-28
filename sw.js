@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bank-jelantah-v1';
+const CACHE_NAME = 'bank-jelantah-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
