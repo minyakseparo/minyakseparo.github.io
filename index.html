@@ -44,7 +44,7 @@
     <div id="loadingOverlay" class="hide fixed inset-0 glass-overlay z-[70] flex flex-col justify-center items-center">
         <div class="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
             <div class="spinner mb-4"></div>
-            <p class="text-gray-800 font-bold tracking-wide mt-2">Menyinkronkan Data...</p>
+            <p class="text-gray-800 font-bold tracking-wide mt-2">Memproses Data...</p>
             <p class="text-xs text-gray-500 mt-1">Harap tunggu sebentar</p>
         </div>
     </div>
@@ -95,7 +95,7 @@
                         <h3 class="text-2xl font-extrabold text-gray-900 mb-1">Halo, <span id="adminName" class="text-primary">Admin</span>! 👋</h3>
                         <p class="text-sm text-gray-500 font-medium">Ringkasan performa Bank Jelantah.</p>
                     </div>
-                    <button onclick="syncAllData()" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
+                    <button onclick="syncSemuaLatarBelakang(true)" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
                 </div>
                 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
@@ -104,6 +104,7 @@
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg col-span-2 md:col-span-1 relative overflow-hidden"><div class="relative z-10"><p class="text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-3xl sm:text-4xl font-black mt-2" id="statSaldo">Rp 0</h4></div><i class="fas fa-wallet absolute -bottom-4 -right-4 text-7xl opacity-20"></i></div>
                 </div>
 
+                <!-- KOTAK GRAFIK -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
                     <div class="relative h-64 w-full"><canvas id="trendChart"></canvas></div>
@@ -190,8 +191,8 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // DETEKSI VERSI & AUTO-CLEAN MEMORI
-        const APP_VERSION = "v2.6_ChartFixed";
+        // DETEKSI VERSI & AUTO-CLEAN (Wajib agar layar grafik tidak nge-blank)
+        const APP_VERSION = "v2.7_ChartFix";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -210,17 +211,21 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        async function fetchAPI(actionName, payloadData = {}) {
+        // FUNGSI FETCH DENGAN AUTO-RETRY JIKA DIBLOKIR GOOGLE
+        async function fetchAPI(actionName, payloadData = {}, retries = 3) {
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    redirect: 'follow',
                     body: JSON.stringify({ action: actionName, payload: payloadData })
                 });
                 return await response.json();
             } catch (error) {
-                throw new Error("Gagal mengambil data.");
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, 1500)); 
+                    return fetchAPI(actionName, payloadData, retries - 1);
+                }
+                throw error;
             }
         }
 
@@ -254,16 +259,20 @@
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
-                    // 1. Tampilkan Tab Dulu (Wajib agar canvas grafik punya ukuran)
-                    switchAdminTab('adminDashboardView', true);
+                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); } else { needsSync = true; }
+                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); } else { needsSync = true; }
+                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); } else { needsSync = true; }
+                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); } else { needsSync = true; }
 
-                    // 2. Render Data Jika Ada
-                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsSync = true; }
-                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsSync = true; }
-                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsSync = true; }
-                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); } else { needsSync = true; }
+                    // WAJIB: Tampilkan Tab & Grafik Walaupun Pakai Memori Lama
+                    switchAdminTab('adminDashboardView');
 
-                    if(needsSync) { syncAllData(); } 
+                    if(needsSync) { 
+                        syncSemuaLatarBelakang(false); 
+                    } else {
+                        // Cek update diam-diam jika memori ada
+                        syncSemuaLatarBelakang(false);
+                    }
 
                 } else {
                     document.getElementById('petugasView').classList.remove('hide'); 
@@ -274,15 +283,54 @@
             }
         }
 
+        // FUNGSI SINKRONISASI CERDAS YANG DIISOLASI (TIDAK BERHENTI KALAU ERROR SATU)
+        async function syncSemuaLatarBelakang(isManual = false) {
+            if(isManual) showLoading(true);
+            let errorCount = 0;
+
+            try {
+                const resDash = await fetchAPI('getAdminDashboard');
+                if(resDash && resDash.totalWarga !== undefined) { cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); }
+            } catch(e) { errorCount++; }
+
+            await new Promise(r => setTimeout(r, 800)); // Beri jeda ke Google
+
+            try {
+                const resMast = await fetchAPI('getAdminMasterData');
+                if(resMast && resMast.warga) { adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); }
+            } catch(e) { errorCount++; }
+
+            await new Promise(r => setTimeout(r, 800));
+
+            try {
+                const resMut = await fetchAPI('getAdminMutasiData');
+                if(resMut && resMut.mutasi) { cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); }
+            } catch(e) { errorCount++; }
+
+            await new Promise(r => setTimeout(r, 800));
+
+            try {
+                const resJad = await fetchAPI('getAdminJadwalData');
+                if(resJad && resJad.jadwal) { cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); }
+            } catch(e) { errorCount++; }
+
+            // Paksa Render Ulang Halaman yang Sedang Dibuka Saja
+            const tabAktif = document.querySelector('.admin-tab:not(.hide)').id;
+            switchAdminTab(tabAktif);
+
+            if(isManual) {
+                showLoading(false);
+                if(errorCount > 0) showToast("Proses selesai, namun beberapa data terblokir Google.", "error");
+                else showToast("Semua data berhasil diperbarui!");
+            }
+        }
+
         async function forceSyncWarga() {
             showLoading(true);
             try {
                 const res = await fetchAPI('getAdminMasterData');
-                if(res && res.warga) {
-                    adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga);
-                    showToast("Data warga disinkronkan");
-                }
-            } catch(e) { showToast("Gagal tarik data warga", "error"); }
+                if(res && res.warga) { adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); switchAdminTab('adminWargaView'); showToast("Data warga disinkronkan"); }
+            } catch(e) { showToast("Gagal tarik data", "error"); }
             showLoading(false);
         }
 
@@ -290,11 +338,8 @@
             showLoading(true);
             try {
                 const res = await fetchAPI('getAdminMutasiData');
-                if(res && res.mutasi) {
-                    cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi);
-                    showToast("Data mutasi disinkronkan");
-                }
-            } catch(e) { showToast("Gagal tarik data mutasi", "error"); }
+                if(res && res.mutasi) { cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); switchAdminTab('adminMutasiView'); showToast("Data mutasi disinkronkan"); }
+            } catch(e) { showToast("Gagal tarik data", "error"); }
             showLoading(false);
         }
 
@@ -302,33 +347,8 @@
             showLoading(true);
             try {
                 const res = await fetchAPI('getAdminJadwalData');
-                if(res && res.jadwal) {
-                    cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal();
-                    showToast("Data jadwal disinkronkan");
-                }
-            } catch(e) { showToast("Gagal tarik data jadwal", "error"); }
-            showLoading(false);
-        }
-
-        async function syncAllData() {
-            showLoading(true);
-            try {
-                const resDash = await fetchAPI('getAdminDashboard');
-                if(resDash && resDash.totalWarga !== undefined) { cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); renderDashboard(resDash); }
-                
-                const resMast = await fetchAPI('getAdminMasterData');
-                if(resMast && resMast.warga) { adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); renderWarga(resMast.warga); }
-                
-                const resMut = await fetchAPI('getAdminMutasiData');
-                if(resMut && resMut.mutasi) { cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); applyFilterMutasi(); renderChart(resMut.mutasi); }
-                
-                const resJad = await fetchAPI('getAdminJadwalData');
-                if(resJad && resJad.jadwal) { cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); applyFilterJadwal(); }
-
-                showToast("Semua data berhasil diperbarui!");
-            } catch(e) {
-                showToast("Gagal sinkronisasi data.", "error");
-            }
+                if(res && res.jadwal) { cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); switchAdminTab('adminJadwalView'); showToast("Data jadwal disinkronkan"); }
+            } catch(e) { showToast("Gagal tarik data", "error"); }
             showLoading(false);
         }
 
@@ -342,7 +362,6 @@
                 if(res.success){ 
                     localStorage.setItem('currentUser', JSON.stringify(res.user)); 
                     localStorage.setItem('systemSettings', JSON.stringify(res.settings)); 
-                    
                     currentUser = res.user; systemSettings = res.settings;
                     
                     setHeaderUI();
@@ -352,25 +371,16 @@
                     if(currentUser.Role === 'Administrator') {
                         document.getElementById('adminArea').classList.remove('hide');
                         document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
-                        switchAdminTab('adminDashboardView', true); // TAB DIBUKA SEBELUM RENDER GRAFIK
                         
-                        if(res.dashboard) { cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); renderDashboard(res.dashboard); }
-                        if(res.masterData) { adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); renderWarga(res.masterData.warga); }
+                        if(res.dashboard) { cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(res.dashboard)); }
+                        if(res.masterData) { adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(res.masterData)); }
 
+                        switchAdminTab('adminDashboardView');
                         showLoading(false); 
                         showToast("Login Berhasil! Menyiapkan area kerja...");
 
-                        setTimeout(async () => {
-                            await fetchAPI('getAdminMutasiData').then(rMu => {
-                                if(rMu && rMu.mutasi) { cacheMutasi = rMu; localStorage.setItem('cacheMutasi', JSON.stringify(rMu)); applyFilterMutasi(); renderChart(rMu.mutasi); }
-                            }).catch(e=>{});
-                        }, 1000);
-
-                        setTimeout(async () => {
-                            await fetchAPI('getAdminJadwalData').then(rJ => {
-                                if(rJ && rJ.jadwal) { cacheJadwal = rJ; localStorage.setItem('cacheJadwal', JSON.stringify(rJ)); applyFilterJadwal(); }
-                            }).catch(e=>{});
-                        }, 2500);
+                        // Lanjutkan sinkronisasi sisanya di latar belakang
+                        syncSemuaLatarBelakang(false);
                         
                     } else {
                         document.getElementById('petugasView').classList.remove('hide');
@@ -383,52 +393,50 @@
             } catch(e){ showLoading(false); showToast("Koneksi gagal. Memulai ulang...", "error"); }
         }
 
-        function logout() { 
-            localStorage.clear();
-            location.reload(); 
-        }
+        function logout() { localStorage.clear(); location.reload(); }
 
-        function switchAdminTab(id, noFetch=false) {
+        // FUNGSI PEMINDAH TAB YANG SUDAH DIPERBAIKI (HANYA MENGAMBIL DARI MEMORI)
+        function switchAdminTab(id) {
             document.querySelectorAll('.admin-tab').forEach(e => e.classList.add('hide'));
             document.getElementById(id).classList.remove('hide');
             document.querySelectorAll('.nav-btn').forEach(btn => { btn.classList.remove('nav-active','text-primary'); btn.classList.add('nav-inactive'); });
             const actBtn = document.getElementById('nav-'+id);
             if(actBtn) actBtn.classList.add('nav-active', 'text-primary');
             
-            if(!noFetch) {
-                if(id==='adminDashboardView') {
-                    if(cacheDashboard) renderDashboard(cacheDashboard);
-                    // PANGGIL GRAFIK DI SINI KARENA TAB SUDAH TERLIHAT
-                    if(cacheMutasi) renderChart(cacheMutasi.mutasi); 
-                }
-                if(id==='adminWargaView' && adminDataMaster) renderWarga(adminDataMaster.warga);
-                if(id==='adminJadwalView' && cacheJadwal) applyFilterJadwal();
-                if(id==='adminMutasiView' && cacheMutasi) { applyFilterMutasi(); }
+            // Selalu Render Ulang Komponen Saat Tab Dibuka
+            if(id === 'adminDashboardView') {
+                if(cacheDashboard) renderDashboard(cacheDashboard);
+                if(cacheMutasi) renderChart(cacheMutasi.mutasi); 
+            } else if(id === 'adminWargaView') {
+                if(adminDataMaster) renderWarga(adminDataMaster.warga);
+            } else if(id === 'adminJadwalView') {
+                if(cacheJadwal) applyFilterJadwal();
+            } else if(id === 'adminMutasiView') {
+                if(cacheMutasi) applyFilterMutasi();
             }
         }
 
-        // FUNGSI GRAFIK YANG SUDAH KEBAL DATA KOSONG
+        // FUNGSI GRAFIK YANG ANTI-CRASH
         function renderChart(mutasiArr) {
             const ctx = document.getElementById('trendChart'); if(!ctx) return;
             
-            let lbl = [];
-            let val = [];
-            
-            if(mutasiArr && mutasiArr.length > 0) {
+            let lbl = ['Belum Ada Transaksi'];
+            let val = [0];
+
+            if (mutasiArr && Array.isArray(mutasiArr) && mutasiArr.length > 0) {
                 const sums = {};
                 mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => {
-                    let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg);
+                    let d = String(m.Tanggal).slice(5, 10); 
+                    sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg || 0);
                 });
-                lbl = Object.keys(sums).slice(0,7).reverse(); 
-                val = Object.values(sums).slice(0,7).reverse();
+                
+                const keys = Object.keys(sums);
+                if (keys.length > 0) {
+                    lbl = keys.slice(0, 7).reverse(); 
+                    val = Object.values(sums).slice(0, 7).reverse();
+                }
             }
-            
-            // JIKA DATA MUTASI MASUK KOSONG SAMA SEKALI
-            if(lbl.length === 0) {
-                lbl = ['Belum Ada Transaksi'];
-                val = [0];
-            }
-            
+
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, { 
                 type: 'line', 
@@ -445,7 +453,7 @@
         }
 
         function renderWarga(arr) {
-            if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400">Belum ada warga terdaftar.</td></tr>'; return; }
+            if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400 font-bold">Belum ada warga terdaftar.</td></tr>'; return; }
             document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-4 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-4 font-medium">${w.Nama_KK}</td><td class="p-4 text-xs text-gray-500">${w.Alamat}</td><td class="p-4 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"><i class="fas fa-qrcode"></i></button></td></tr>`).join('');
         }
 
@@ -468,7 +476,7 @@
             if(end) { let e = new Date(end); e.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= e); }
             
             document.getElementById('stokTersediaMutasi').innerText = cacheMutasi.stokTersedia;
-            if(arr.length === 0) { document.getElementById('tableMutasi').innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400">Tidak ada data.</td></tr>'; return; }
+            if(arr.length === 0) { document.getElementById('tableMutasi').innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 font-bold">Tidak ada data transaksi.</td></tr>'; return; }
             document.getElementById('tableMutasi').innerHTML = arr.map(m => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors"><td class="p-4 text-xs font-bold text-gray-500">${String(m.Tanggal).slice(0,10)}</td><td class="p-4"><span class="px-2 py-1 text-[10px] font-black uppercase rounded ${m.Jenis==='Masuk'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.Jenis}</span></td><td class="p-4 text-center font-black text-lg text-gray-800">${m.Jumlah_Kg}</td><td class="p-4 text-xs text-gray-500 font-medium">${m.Keterangan}</td></tr>`).join('');
         }
 
@@ -478,18 +486,16 @@
             if(s) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(s));
             if(e) { let ed = new Date(e); ed.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= ed); }
             
-            if(arr.length === 0) { document.getElementById('listJadwalAdmin').innerHTML = '<p class="text-center py-8 text-gray-400">Jadwal kosong.</p>'; return; }
+            if(arr.length === 0) { document.getElementById('listJadwalAdmin').innerHTML = '<p class="text-center py-8 text-gray-400 font-bold">Jadwal kosong.</p>'; return; }
             document.getElementById('listJadwalAdmin').innerHTML = arr.map(j => { let prog = j.Target > 0 ? Math.round((j.Selesai/j.Target)*100) : 0; return `<div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-3 hover:-translate-y-1 transition-transform"><div class="flex justify-between font-bold mb-3"><h4 class="tracking-tight text-gray-900"><i class="fas fa-calendar-day text-primary mr-2"></i>${String(j.Tanggal).slice(0,10)}</h4><span class="text-[10px] uppercase tracking-wider bg-gray-100 px-3 py-1 rounded-lg text-gray-600">${j.Status}</span></div><p class="text-sm font-medium text-gray-600 mb-4 flex items-center"><div class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs mr-2"><i class="fas fa-user"></i></div> ${j.Nama_Petugas}</p><div class="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest mb-2"><span>Progress</span><span class="text-primary">${j.Selesai}/${j.Target}</span></div><div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden"><div class="bg-primary h-2.5 rounded-full" style="width: ${prog}%"></div></div></div>`}).join('');
         }
 
-        // ================= OPTIMISTIC UI: UPDATE LANGSUNG TANPA LOADING =================
+        // ================= OPTIMISTIC UI =================
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
         async function submitAddWarga() { 
             const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; 
             if(!n||!a) return showToast("Isi form!", "error"); 
-            
             showLoading(true); closeModal('modalAddWarga'); 
-            
             try {
                 let newId = "WGR-Baru";
                 if(adminDataMaster && adminDataMaster.warga) {
@@ -504,31 +510,17 @@
                 }
 
                 await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp});
-                showLoading(false); 
-                showToast("Warga berhasil ditambahkan!");
+                showLoading(false); showToast("Warga berhasil ditambahkan!");
+                syncSemuaLatarBelakang(false); // Update Background
 
-                setTimeout(async () => {
-                    try {
-                        const res = await fetchAPI('getAdminMasterData');
-                        if(res && res.warga) {
-                            adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res));
-                            if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(res.warga);
-                        }
-                    } catch(err){}
-                }, 2000);
-
-            } catch(e){ 
-                showLoading(false); showToast("Gagal menyimpan data", "error"); 
-            }
+            } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); }
         }
         
         function bukaModalJual() { document.getElementById('modalJualMinyak').classList.remove('hide'); }
         async function submitJualMinyak() { 
             const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; 
             if(!b||!p) return showToast("Lengkapi form!", "error"); 
-            
             showLoading(true); closeModal('modalJualMinyak'); 
-            
             try {
                 if(cacheMutasi && cacheMutasi.mutasi) {
                     cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: "Pengepul: " + p});
@@ -544,16 +536,7 @@
 
                 await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p});
                 showLoading(false); showToast("Minyak berhasil dijual!");
-
-                setTimeout(async () => {
-                    try {
-                        const res = await fetchAPI('getAdminMutasiData');
-                        if(res && res.mutasi) {
-                            cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res));
-                            if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); }
-                        }
-                    } catch(e){}
-                }, 2000);
+                syncSemuaLatarBelakang(false);
 
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
@@ -563,7 +546,6 @@
             const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); 
             if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); 
             showLoading(true); closeModal('modalAddJadwal'); 
-            
             try {
                 if(cacheJadwal && cacheJadwal.jadwal) {
                     const petName = document.getElementById('addPetugasJadwal').options[document.getElementById('addPetugasJadwal').selectedIndex].text;
@@ -574,16 +556,7 @@
 
                 await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds});
                 showLoading(false); showToast("Jadwal Diterbitkan!");
-
-                setTimeout(async () => {
-                    try {
-                        const res = await fetchAPI('getAdminJadwalData');
-                        if(res && res.jadwal) {
-                            cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res));
-                            if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal();
-                        }
-                    } catch(e){}
-                }, 2000);
+                syncSemuaLatarBelakang(false);
 
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
