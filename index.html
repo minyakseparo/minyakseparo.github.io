@@ -179,7 +179,6 @@
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
 
-        // Registrasi Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Registration failed.')); });
         }
@@ -193,7 +192,6 @@
             setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
         }
 
-        // FUNGSI FETCH YANG SUDAH DIPERBAIKI (Penambahan Headers agar tidak terblokir CORS Google)
         async function fetchAPI(actionName, payloadData = {}, retries = 2) {
             try {
                 const response = await fetch(API_URL, {
@@ -235,13 +233,12 @@
                     document.getElementById('adminArea').classList.remove('hide'); 
                     document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                     
-                    // 1. Render data dari Cache (Memori HP)
+                    // 1. Render data dari Cache
                     const cDash = localStorage.getItem('cacheDashboard');
                     const cMast = localStorage.getItem('adminDataMaster');
                     const cMut = localStorage.getItem('cacheMutasi');
                     const cJad = localStorage.getItem('cacheJadwal');
 
-                    // Validasi agar cache tidak undefined
                     if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); }
                     if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); }
                     if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
@@ -249,30 +246,30 @@
 
                     switchAdminTab('adminDashboardView', true);
 
-                    // 2. Tarik Data Terbaru dari Server Google di Latar Belakang (Silent Fetch)
-                    fetchAPI('getAdminDashboard').then(res => {
-                        if(res && res.totalWarga !== undefined) {
-                            cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(res)); renderDashboard(res);
-                        }
-                    }).catch(e => {});
+                    // 2. Tarik Data Secara Berurutan agar Google Script tidak memblokir (CORS)
+                    (async () => {
+                        try {
+                            const resDash = await fetchAPI('getAdminDashboard');
+                            if(resDash && resDash.totalWarga !== undefined) {
+                                cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); renderDashboard(resDash);
+                            }
 
-                    fetchAPI('getAdminMasterData').then(res => {
-                        if(res && res.warga) {
-                            adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga);
-                        }
-                    }).catch(e => {});
+                            const resMast = await fetchAPI('getAdminMasterData');
+                            if(resMast && resMast.warga) {
+                                adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); renderWarga(resMast.warga);
+                            }
 
-                    fetchAPI('getAdminMutasiData').then(res => {
-                        if(res && res.mutasi) {
-                            cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi);
-                        }
-                    }).catch(e => {});
+                            const resMut = await fetchAPI('getAdminMutasiData');
+                            if(resMut && resMut.mutasi) {
+                                cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); applyFilterMutasi(); renderChart(resMut.mutasi);
+                            }
 
-                    fetchAPI('getAdminJadwalData').then(res => {
-                        if(res && res.jadwal) {
-                            cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal();
-                        }
-                    }).catch(e => {});
+                            const resJad = await fetchAPI('getAdminJadwalData');
+                            if(resJad && resJad.jadwal) {
+                                cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); applyFilterJadwal();
+                            }
+                        } catch(e) { console.log("Gagal sync background."); }
+                    })();
 
                 } else {
                     document.getElementById('petugasView').classList.remove('hide'); 
@@ -280,7 +277,7 @@
                     if(pTasks && pTasks !== "undefined") {
                         renderTasksData(JSON.parse(pTasks));
                     }
-                    loadPetugasTasks(); // Refresh otomatis di latar belakang
+                    loadPetugasTasks();
                 }
             }
         }
@@ -296,8 +293,7 @@
                     localStorage.setItem('currentUser', JSON.stringify(res.user)); 
                     localStorage.setItem('systemSettings', JSON.stringify(res.settings)); 
                     
-                    currentUser = res.user;
-                    systemSettings = res.settings;
+                    currentUser = res.user; systemSettings = res.settings;
                     
                     setHeaderUI();
                     document.getElementById('loginView').classList.add('hide'); 
@@ -310,7 +306,6 @@
                         
                         showToast("Login Berhasil! Menarik data...");
                         
-                        // Menarik data awal setelah login berhasil
                         await loadAdminDashboard(true);
                         await loadAdminWarga(true);
                         await loadAdminMutasi(true);
@@ -328,7 +323,10 @@
             } catch(e){ showLoading(false); showToast("Koneksi gagal. Cek internet.", "error"); }
         }
 
-        function logout() { localStorage.clear(); location.reload(); }
+        function logout() { 
+            localStorage.clear();
+            location.reload(); 
+        }
 
         function switchAdminTab(id, noFetch=false) {
             document.querySelectorAll('.admin-tab').forEach(e => e.classList.add('hide'));
@@ -362,11 +360,9 @@
             try {
                 const res = await fetchAPI('getAdminDashboard'); 
                 if(res && res.totalWarga !== undefined) {
-                    cacheDashboard = res; 
-                    localStorage.setItem('cacheDashboard', JSON.stringify(res));
-                    renderDashboard(res); 
+                    cacheDashboard = res; localStorage.setItem('cacheDashboard', JSON.stringify(res)); renderDashboard(res); 
                 }
-            } catch(e) { console.log("Gagal memuat Dashboard"); }
+            } catch(e) {}
         }
         
         async function loadAdminWarga(force = false) { 
@@ -374,11 +370,9 @@
             try {
                 const res = await fetchAPI('getAdminMasterData'); 
                 if(res && res.warga) {
-                    adminDataMaster = res; 
-                    localStorage.setItem('adminDataMaster', JSON.stringify(res));
-                    renderWarga(res.warga); 
+                    adminDataMaster = res; localStorage.setItem('adminDataMaster', JSON.stringify(res)); renderWarga(res.warga); 
                 }
-            } catch(e) { console.log("Gagal memuat Master Warga"); }
+            } catch(e) {}
         }
         
         async function loadAdminMutasi(force = false) { 
@@ -386,12 +380,9 @@
             try {
                 const res = await fetchAPI('getAdminMutasiData'); 
                 if(res && res.mutasi) {
-                    cacheMutasi = res; 
-                    localStorage.setItem('cacheMutasi', JSON.stringify(res));
-                    applyFilterMutasi(); 
-                    renderChart(res.mutasi); 
+                    cacheMutasi = res; localStorage.setItem('cacheMutasi', JSON.stringify(res)); applyFilterMutasi(); renderChart(res.mutasi); 
                 }
-            } catch(e) { console.log("Gagal memuat Mutasi"); }
+            } catch(e) {}
         }
 
         async function loadAdminJadwal(force = false) { 
@@ -399,11 +390,9 @@
             try {
                 const res = await fetchAPI('getAdminJadwalData'); 
                 if(res && res.jadwal) {
-                    cacheJadwal = res; 
-                    localStorage.setItem('cacheJadwal', JSON.stringify(res));
-                    applyFilterJadwal(); 
+                    cacheJadwal = res; localStorage.setItem('cacheJadwal', JSON.stringify(res)); applyFilterJadwal(); 
                 }
-            } catch(e) { console.log("Gagal memuat Jadwal"); }
+            } catch(e) {}
         }
 
         function renderDashboard(data) {
