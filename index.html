@@ -98,24 +98,19 @@
                     <button onclick="syncSemuaLatarBelakang(true)" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
                 </div>
                 
-                <!-- GRID DIPERBARUI: TEKS TIDAK LAGI TERPOTONG -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8">
-                    <!-- Kartu 1: Warga -->
                     <div class="bg-gradient-to-br from-primary to-green-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
                         <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statWarga">0</h4></div>
                         <i class="fas fa-users absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
                     </div>
-                    <!-- Kartu 2: Stok -->
                     <div class="bg-gradient-to-br from-secondary to-yellow-500 text-gray-900 p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
                         <div class="relative z-10"><p class="text-xs sm:text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statStok">0</h4></div>
                         <i class="fas fa-oil-can absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
                     </div>
-                    <!-- Kartu 3: Saldo (TRUNCATE DIHAPUS, DIGANTI BREAK-WORDS) -->
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
                         <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-2xl sm:text-3xl font-black mt-1 sm:mt-2 break-words leading-tight" id="statSaldo">Rp 0</h4></div>
                         <i class="fas fa-wallet absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
                     </div>
-                    <!-- Kartu 4: Top Contributor (TRUNCATE DIHAPUS, UKURAN DISESUAIKAN) -->
                     <div class="bg-gradient-to-br from-pink-500 to-rose-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-center">
                         <div class="relative z-10">
                             <p class="text-xs sm:text-sm font-semibold opacity-90 mb-1"><i class="fas fa-crown text-yellow-300 mr-1"></i> Top Warga</p>
@@ -202,7 +197,38 @@
     <!-- MODALS UTILITY -->
     <div id="modalAddWarga" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-6">Tambah Warga</h3><div class="space-y-4"><input type="text" id="addNamaWarga" class="w-full p-3.5 border rounded-xl" placeholder="Nama Lengkap"><input type="text" id="addAlamatWarga" class="w-full p-3.5 border rounded-xl" placeholder="Alamat Lengkap"><input type="text" id="addHpWarga" class="w-full p-3.5 border rounded-xl" placeholder="No HP/WA"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalAddWarga')" class="w-1/3 border py-3.5 rounded-xl font-bold bg-white">Batal</button><button onclick="submitAddWarga()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md">Simpan Data</button></div></div></div>
     
-    <div id="modalAddJadwal" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-lg rounded-3xl p-8 flex flex-col max-h-[90vh] shadow-2xl"><h3 class="font-black text-2xl mb-6">Jadwal Baru</h3><div class="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 space-y-4"><input type="date" id="addTglJadwal" class="w-full p-3.5 border rounded-xl font-medium"><select id="addPetugasJadwal" class="w-full p-3.5 border rounded-xl font-medium"></select><div id="listCheckboxWarga" class="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto bg-white space-y-1"></div></div><div class="flex gap-3"><button onclick="closeModal('modalAddJadwal')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitAddJadwal()" class="w-2/3 bg-primary text-white py-3.5 rounded-xl font-black shadow-md">Terbitkan</button></div></div></div>
+    <!-- MODAL JADWAL DIPERBARUI: SEARCH & SELECT ALL -->
+    <div id="modalAddJadwal" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-3xl p-6 sm:p-8 flex flex-col max-h-[90vh] shadow-2xl">
+            <h3 class="font-black text-2xl mb-5">Jadwal Baru</h3>
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col">
+                <div class="space-y-4 mb-4">
+                    <input type="date" id="addTglJadwal" class="w-full p-3.5 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary">
+                    <select id="addPetugasJadwal" class="w-full p-3.5 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary"></select>
+                </div>
+                
+                <div class="flex flex-col flex-1 min-h-[200px]">
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="block text-xs font-bold text-gray-600 uppercase ml-1">Pilih Warga</label>
+                    </div>
+                    <!-- Fitur Search & Select All -->
+                    <div class="flex gap-2 mb-3">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+                            <input type="text" id="searchWargaJadwal" oninput="filterWargaJadwal()" class="w-full pl-8 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-primary" placeholder="Cari nama...">
+                        </div>
+                        <button type="button" id="btnSelectAllWarga" onclick="toggleSelectAllWarga()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-4 rounded-xl border border-gray-200 transition-colors whitespace-nowrap">Pilih Semua</button>
+                    </div>
+                    
+                    <div id="listCheckboxWarga" class="flex-1 border border-gray-200 rounded-xl p-3 overflow-y-auto bg-white space-y-1 custom-scrollbar"></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-5 pt-4 border-t border-gray-100">
+                <button onclick="closeModal('modalAddJadwal')" class="w-1/3 bg-white border border-gray-200 text-gray-700 py-3.5 rounded-xl font-bold hover:bg-gray-50 transition-colors">Batal</button>
+                <button onclick="submitAddJadwal()" class="w-2/3 bg-primary hover:bg-green-700 text-white py-3.5 rounded-xl font-black shadow-md transition-colors">Terbitkan</button>
+            </div>
+        </div>
+    </div>
     
     <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-2">Jual ke Pengepul</h3><p class="mb-6 text-sm text-gray-500 bg-yellow-50 inline-block px-3 py-1 rounded-lg border">Gudang: <strong id="infoStokJual" class="text-yellow-600">0</strong> Kg</p><div class="space-y-4"><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border rounded-xl" placeholder="0 Kg"><input type="text" id="addNamaPengepul" class="w-full p-3.5 border bg-gray-50 rounded-xl" placeholder="Nama Pengepul"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black shadow-md">Proses Penjualan</button></div></div></div>
     
@@ -219,8 +245,9 @@
         let currentUser = null, systemSettings = null, currentTasks = [];
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
+        let isAllSelected = false; // State untuk fitur Select All Warga
 
-        const APP_VERSION = "v3.2_MobileFix";
+        const APP_VERSION = "v3.3_SelectAll";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -527,7 +554,64 @@
             document.getElementById('listJadwalAdmin').innerHTML = arr.map(j => { let prog = j.Target > 0 ? Math.round((j.Selesai/j.Target)*100) : 0; return `<div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-3 hover:-translate-y-1 transition-transform"><div class="flex justify-between font-bold mb-3"><h4 class="tracking-tight text-gray-900"><i class="fas fa-calendar-day text-primary mr-2"></i>${String(j.Tanggal).slice(0,10)}</h4><span class="text-[10px] uppercase tracking-wider bg-gray-100 px-3 py-1 rounded-lg text-gray-600">${j.Status}</span></div><p class="text-sm font-medium text-gray-600 mb-4 flex items-center"><div class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs mr-2"><i class="fas fa-user"></i></div> ${j.Nama_Petugas}</p><div class="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest mb-2"><span>Progress</span><span class="text-primary">${j.Selesai}/${j.Target}</span></div><div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden"><div class="bg-primary h-2.5 rounded-full" style="width: ${prog}%"></div></div></div>`}).join('');
         }
 
-        // ================= OPTIMISTIC UI =================
+        // ================= FITUR JADWAL: SEARCH & SELECT ALL =================
+        function filterWargaJadwal() {
+            const term = document.getElementById('searchWargaJadwal').value.toLowerCase();
+            const labels = document.querySelectorAll('#listCheckboxWarga label');
+            labels.forEach(label => {
+                const text = label.innerText.toLowerCase();
+                if(text.includes(term)) {
+                    label.style.display = 'flex';
+                } else {
+                    label.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleSelectAllWarga() {
+            isAllSelected = !isAllSelected;
+            const btn = document.getElementById('btnSelectAllWarga');
+            btn.innerText = isAllSelected ? "Batal Pilih" : "Pilih Semua";
+            
+            if(isAllSelected) {
+                btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+                btn.classList.remove('bg-gray-100', 'text-gray-700', 'border-gray-200');
+            } else {
+                btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+                btn.classList.add('bg-gray-100', 'text-gray-700', 'border-gray-200');
+            }
+            
+            const labels = document.querySelectorAll('#listCheckboxWarga label');
+            labels.forEach(label => {
+                if(label.style.display !== 'none') {
+                    const cb = label.querySelector('input[type="checkbox"]');
+                    if(cb) cb.checked = isAllSelected;
+                }
+            });
+        }
+
+        function bukaModalJadwal() { 
+            if(!adminDataMaster) return showToast("Menunggu data...", "error"); 
+            const sel = document.getElementById('addPetugasJadwal'); 
+            sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); 
+            
+            // Reset Search dan Tombol Pilih Semua
+            const searchInput = document.getElementById('searchWargaJadwal');
+            if(searchInput) searchInput.value = '';
+            isAllSelected = false;
+            const btnAll = document.getElementById('btnSelectAllWarga');
+            if(btnAll) {
+                btnAll.innerText = "Pilih Semua";
+                btnAll.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-4 rounded-xl border border-gray-200 transition-colors whitespace-nowrap";
+            }
+
+            const cb = document.getElementById('listCheckboxWarga'); 
+            cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-3 border border-gray-100 rounded-xl mb-2 items-center hover:bg-green-50 cursor-pointer transition-colors"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-3 w-4 h-4 text-primary"><span class="font-bold text-sm">${w.Nama_KK}</span></label>`).join(''); 
+            
+            document.getElementById('modalAddJadwal').classList.remove('hide'); 
+        }
+
+        // ================= CRUD ACTIONS =================
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
         async function submitAddWarga() { 
             const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; 
@@ -538,7 +622,7 @@
             try {
                 let newId = "WGR-Baru";
                 if(adminDataMaster && adminDataMaster.warga) {
-                    adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0});
+                    adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0, Total_Minyak_Kg: 0});
                     localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
                     if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(adminDataMaster.warga);
                 }
@@ -593,10 +677,9 @@
             } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); }
         }
 
-        function bukaModalJadwal() { if(!adminDataMaster) return showToast("Menunggu data...", "error"); const sel = document.getElementById('addPetugasJadwal'); sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); const cb = document.getElementById('listCheckboxWarga'); cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-3 border border-gray-100 rounded-xl mb-2 items-center hover:bg-green-50"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-3 w-4 h-4 text-primary"><span class="font-bold text-sm">${w.Nama_KK}</span></label>`).join(''); document.getElementById('modalAddJadwal').classList.remove('hide'); }
         async function submitAddJadwal() { 
             const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); 
-            if(!t||!p||!wIds.length) return showToast("Pilih lengkap!","error"); 
+            if(!t||!p||!wIds.length) return showToast("Pilih minimal 1 warga!","error"); 
             showLoading(true); closeModal('modalAddJadwal'); 
             
             try {
