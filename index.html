@@ -13,7 +13,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
@@ -189,12 +188,15 @@
     <!-- AREA PETUGAS -->
     <main id="petugasView" class="hide flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 pb-20 bg-gray-50">
         <div class="flex justify-between items-end mb-6"><div><h2 class="text-2xl font-black">KUNJUNGAN</h2><p class="text-sm text-gray-500 mt-1" id="tglHariIni"></p></div><button onclick="loadPetugasTasks(true)" class="bg-white border p-2.5 rounded-xl font-bold shadow-sm"><i class="fas fa-sync-alt text-gray-600"></i></button></div>
+        
+        <!-- DASHBOARD PETUGAS -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-6 flex justify-around text-center divide-x">
             <div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Target</p><h3 class="text-2xl font-black" id="taskTotal">0</h3></div>
             <div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Selesai</p><h3 class="text-2xl font-black text-primary" id="taskSelesai">0</h3></div>
             <div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Belum</p><h3 class="text-2xl font-black text-red-500" id="taskBelum">0</h3></div>
-            <div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Minyak</p><h3 class="text-2xl font-black text-yellow-500" id="taskMinyak">0</h3></div>
+            <div class="w-1/4"><p class="text-[9px] font-bold text-gray-400 uppercase">Stok Gudang</p><h3 class="text-2xl font-black text-yellow-500" id="taskMinyak">0</h3></div>
         </div>
+
         <div class="mb-6 flex gap-3"><div class="relative flex-1"><i class="fas fa-search absolute left-4 top-5 text-gray-400"></i><input type="text" id="searchTask" oninput="renderTaskList()" class="w-full pl-11 p-4 bg-white border rounded-2xl" placeholder="Cari warga / kode..."></div><button onclick="bukaScanner()" class="bg-gray-900 text-white w-14 rounded-2xl shadow-lg"><i class="fas fa-qrcode text-xl"></i></button></div>
         <div id="taskList" class="space-y-4"></div><div id="noTaskMsg" class="hide text-center py-12 px-4 bg-white rounded-3xl border mt-4"><h4 class="font-black text-xl">Semua Selesai!</h4></div>
     </main>
@@ -210,7 +212,6 @@
                     <input type="date" id="addTglJadwal" class="w-full p-3.5 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary">
                     <select id="addPetugasJadwal" class="w-full p-3.5 border border-gray-200 rounded-xl font-medium outline-none focus:border-primary"></select>
                 </div>
-                
                 <div class="flex flex-col flex-1 min-h-[200px]">
                     <div class="flex justify-between items-end mb-2">
                         <label class="block text-xs font-bold text-gray-600 uppercase ml-1">Pilih Warga</label>
@@ -222,7 +223,6 @@
                         </div>
                         <button type="button" id="btnSelectAllWarga" onclick="toggleSelectAllWarga()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-4 rounded-xl border border-gray-200 transition-colors whitespace-nowrap">Pilih Semua</button>
                     </div>
-                    
                     <div id="listCheckboxWarga" class="flex-1 border border-gray-200 rounded-xl p-3 overflow-y-auto bg-white space-y-1 custom-scrollbar"></div>
                 </div>
             </div>
@@ -250,8 +250,7 @@
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
         let isAllSelected = false; 
 
-        // DETEKSI VERSI (Pembersih Cache)
-        const APP_VERSION = "v3.4_PetugasFilter";
+        const APP_VERSION = "v3.5_SyncPetugasAdmin";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -707,6 +706,16 @@
             if(!force) showLoading(true);
             try{ 
                 const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); 
+                
+                // BARU: Tarik data Dashboard untuk menyamakan Stok Gudang Global dengan Admin
+                try {
+                    const resDash = await fetchAPI('getAdminDashboard');
+                    if(resDash && resDash.stokTersedia !== undefined) {
+                        let globalStok = Number(resDash.stokTersedia);
+                        document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1);
+                    }
+                } catch(err){}
+
                 if(res.success){ 
                     currentTasks = res.tasks||[]; 
                     localStorage.setItem('petugasTasks', JSON.stringify(res)); 
@@ -723,12 +732,12 @@
                 document.getElementById('taskTotal').innerText = '0'; 
                 document.getElementById('taskSelesai').innerText = '0'; 
                 document.getElementById('taskBelum').innerText = '0'; 
-                document.getElementById('taskMinyak').innerText = '0'; 
+                // Jangan nol-kan taskMinyak karena ini Stok Gudang
                 return; 
             }
             document.getElementById('noTaskMsg').classList.add('hide'); 
             
-            // FILTER HANYA JADWAL TERBARU UNTUK PETUGAS
+            // FILTER HANYA JADWAL TERBARU UNTUK TARGET & SELESAI
             let rawTasks = res.tasks;
             let newestId = null;
             let maxDate = 0;
@@ -750,28 +759,14 @@
             }
 
             let selesai = 0; 
-            let kumpulMinyak = 0;
-
             currentTasks.forEach(task => { 
-                if(task.Status !== 'Belum Dikunjungi') {
-                    selesai++;
-                    let b = parseFloat(task.Total_Minyak_Kg || task.Total_Minyak || task.Berat || task.Jumlah_Kg) || 0;
-                    kumpulMinyak += b;
-                } 
+                if(task.Status !== 'Belum Dikunjungi') selesai++;
             });
 
             document.getElementById('taskTotal').innerText = currentTasks.length; 
             document.getElementById('taskSelesai').innerText = selesai; 
             document.getElementById('taskBelum').innerText = currentTasks.length - selesai;
             
-            // Jika Backend mengirim stok gudang, gunakan itu. Jika tidak, gunakan total dari rute ini.
-            if (res.totalMinyak !== undefined && res.totalMinyak !== null) {
-                let backendMinyak = Number(res.totalMinyak);
-                document.getElementById('taskMinyak').innerText = backendMinyak % 1 === 0 ? backendMinyak : backendMinyak.toFixed(1);
-            } else {
-                document.getElementById('taskMinyak').innerText = kumpulMinyak % 1 === 0 ? kumpulMinyak : kumpulMinyak.toFixed(1);
-            }
-
             renderTaskList();
         }
 
