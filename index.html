@@ -13,6 +13,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
@@ -250,7 +251,8 @@
         let chartInstance = null; let activeKunjungan = null; let selectedStatus = ''; 
         let isAllSelected = false; 
 
-        const APP_VERSION = "v3.5_SyncPetugasAdmin";
+        // DETEKSI VERSI TERBARU (Mereset Cache Otomatis)
+        const APP_VERSION = "v3.6_PetugasStokFix";
         if(localStorage.getItem('appVersion') !== APP_VERSION) {
             localStorage.clear();
             localStorage.setItem('appVersion', APP_VERSION);
@@ -359,9 +361,7 @@
 
                 } else {
                     document.getElementById('petugasView').classList.remove('hide'); 
-                    const pTasks = localStorage.getItem('petugasTasks');
-                    if(pTasks && pTasks !== "undefined") { renderTasksData(JSON.parse(pTasks)); }
-                    loadPetugasTasks();
+                    loadPetugasTasks(); // Panggil fungsi pintar
                 }
             }
         }
@@ -439,6 +439,11 @@
                     localStorage.setItem('systemSettings', JSON.stringify(res.settings)); 
                     currentUser = res.user; systemSettings = res.settings;
                     
+                    // Simpan data Dashboard Global (Termasuk Stok) jika dikirim dari server
+                    if(res.dashboard && res.dashboard.stokTersedia !== undefined) {
+                        localStorage.setItem('globalStokCache', res.dashboard.stokTersedia);
+                    }
+
                     setHeaderUI();
                     document.getElementById('loginView').classList.add('hide'); 
                     document.getElementById('appHeader').classList.remove('hide');
@@ -704,23 +709,45 @@
         // ================= PETUGAS =================
         async function loadPetugasTasks(force = false) { 
             if(!force) showLoading(true);
-            try{ 
-                const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); 
-                
-                // BARU: Tarik data Dashboard untuk menyamakan Stok Gudang Global dengan Admin
-                try {
-                    const resDash = await fetchAPI('getAdminDashboard');
-                    if(resDash && resDash.stokTersedia !== undefined) {
-                        let globalStok = Number(resDash.stokTersedia);
-                        document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1);
-                    }
-                } catch(err){}
 
+            // Tampilkan cache Stok Gudang Global Terakhir saat Loading agar tidak 0
+            let cachedStok = localStorage.getItem('globalStokCache');
+            if(cachedStok !== null) {
+                let st = Number(cachedStok);
+                document.getElementById('taskMinyak').innerText = st % 1 === 0 ? st : st.toFixed(1);
+            }
+
+            try{ 
+                // 1. Tarik Data Jadwal Utama Petugas
+                const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); 
                 if(res.success){ 
                     currentTasks = res.tasks||[]; 
                     localStorage.setItem('petugasTasks', JSON.stringify(res)); 
                     renderTasksData(res); 
-                } 
+                }
+
+                // 2. Tarik Data Stok Gudang Global secara diam-diam (Diisolasi dan diberi jeda)
+                setTimeout(async () => {
+                    try {
+                        const resDash = await fetchAPI('getAdminDashboard');
+                        if(resDash && resDash.stokTersedia !== undefined) {
+                            let globalStok = Number(resDash.stokTersedia);
+                            document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1);
+                            localStorage.setItem('globalStokCache', globalStok);
+                        } else {
+                            // Fallback jika tidak ada akses dashboard
+                            const resMut = await fetchAPI('getAdminMutasiData');
+                            if(resMut && resMut.stokTersedia !== undefined) {
+                                let globalStok = Number(resMut.stokTersedia);
+                                document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1);
+                                localStorage.setItem('globalStokCache', globalStok);
+                            }
+                        }
+                    } catch(err) {
+                        console.log("Stok global menggunakan data memori lokal.");
+                    }
+                }, 1000);
+
             } catch(e){ showToast("Gagal update jadwal", "error"); }
             if(!force) showLoading(false);
         }
@@ -732,12 +759,11 @@
                 document.getElementById('taskTotal').innerText = '0'; 
                 document.getElementById('taskSelesai').innerText = '0'; 
                 document.getElementById('taskBelum').innerText = '0'; 
-                // Jangan nol-kan taskMinyak karena ini Stok Gudang
                 return; 
             }
             document.getElementById('noTaskMsg').classList.add('hide'); 
             
-            // FILTER HANYA JADWAL TERBARU UNTUK TARGET & SELESAI
+            // FILTER HANYA JADWAL TERBARU UNTUK PETUGAS (Sesuai Gambar Referensi)
             let rawTasks = res.tasks;
             let newestId = null;
             let maxDate = 0;
@@ -760,7 +786,7 @@
 
             let selesai = 0; 
             currentTasks.forEach(task => { 
-                if(task.Status !== 'Belum Dikunjungi') selesai++;
+                if(task.Status !== 'Belum Dikunjungi') selesai++; 
             });
 
             document.getElementById('taskTotal').innerText = currentTasks.length; 
@@ -783,8 +809,20 @@
         async function simpanKunjungan() { 
             if(!selectedStatus)return showToast("Pilih status!","error"); 
             let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } 
+            
             closeModal('modalTransaksi'); showLoading(true); 
+            
             try {
+                // OPTIMISTIC UI: Tambah Stok Global Petugas Langsung di Layar
+                if(selectedStatus === 'Sudah Diambil') {
+                    let cachedStok = localStorage.getItem('globalStokCache');
+                    if(cachedStok !== null) {
+                        let newStok = Number(cachedStok) + b;
+                        document.getElementById('taskMinyak').innerText = newStok % 1 === 0 ? newStok : newStok.toFixed(1);
+                        localStorage.setItem('globalStokCache', newStok);
+                    }
+                }
+
                 await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); 
                 await loadPetugasTasks(true); 
                 showLoading(false); showToast("Kunjungan disimpan");
