@@ -6,7 +6,7 @@
     <title id="docTitle">Minyak Separo</title>
     
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#ea580c">
     <link id="docIcon" rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8892/8892404.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,14 +17,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { primary: '#16a34a', secondary: '#facc15', dark: '#1f2937' } } } }
+        /* MENGUBAH PRIMARY JADI ORANYE, SECONDARY JADI HIJAU */
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { primary: '#ea580c', secondary: '#16a34a', dark: '#1f2937' } } } }
     </script>
     <style>
         body { background-color: #f8fafc; overflow: hidden; }
         .hide { display: none !important; }
-        .spinner { border: 4px solid rgba(22, 163, 74, 0.1); width: 44px; height: 44px; border-radius: 50%; border-left-color: #16a34a; animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        /* MENGUBAH WARNA LOADING SPINNER JADI ORANYE */
+        .spinner { border: 4px solid rgba(234, 88, 12, 0.1); width: 44px; height: 44px; border-radius: 50%; border-left-color: #ea580c; animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .nav-active { color: #16a34a; font-weight: 800; background-color: #f0fdf4; }
+        /* MENGUBAH HIGHLIGHT MENU AKTIF JADI ORANYE */
+        .nav-active { color: #ea580c; font-weight: 800; background-color: #fff7ed; }
         .nav-inactive { color: #9ca3af; font-weight: 500; }
         .nav-inactive:hover { background-color: #f9fafb; color: #4b5563; }
         .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
@@ -66,7 +69,7 @@
 
     <!-- LOGIN VIEW -->
     <main id="loginView" class="flex-1 flex flex-col justify-center items-center p-6 bg-cover bg-center relative">
-        <div class="absolute inset-0 bg-green-900/80 backdrop-blur-sm"></div>
+        <div class="absolute inset-0 bg-gray-900/90 backdrop-blur-sm"></div>
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center relative z-10">
             <div class="w-24 h-24 bg-gradient-to-br from-primary to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg overflow-hidden p-2">
                 <img id="loginAppIcon" src="LINK_ATAU_BASE64_LOGO_ANDA_DISINI" class="w-full h-full object-contain">
@@ -654,7 +657,7 @@
         }
 
         // ================= CRUD REGULER & UTILITAS =================
-        function renderChart(mutasiArr) { const ctx = document.getElementById('trendChart'); if(!ctx) return; let lbl = ['Belum Ada Transaksi']; let val = [0]; if (mutasiArr && Array.isArray(mutasiArr) && mutasiArr.length > 0) { const sums = {}; mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => { let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg || 0); }); const keys = Object.keys(sums); if (keys.length > 0) { lbl = keys.slice(0, 7).reverse(); val = Object.values(sums).slice(0, 7).reverse(); } } if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } } } }); }
+        function renderChart(mutasiArr) { const ctx = document.getElementById('trendChart'); if(!ctx) return; let lbl = ['Belum Ada Transaksi']; let val = [0]; if (mutasiArr && Array.isArray(mutasiArr) && mutasiArr.length > 0) { const sums = {}; mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => { let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg || 0); }); const keys = Object.keys(sums); if (keys.length > 0) { lbl = keys.slice(0, 7).reverse(); val = Object.values(sums).slice(0, 7).reverse(); } } if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } } } }); }
         function renderDashboard(data) { if (!data) return; if(document.getElementById('statWarga')) document.getElementById('statWarga').innerText = data.totalWarga || 0; if(document.getElementById('statStok')) document.getElementById('statStok').innerText = data.stokTersedia || 0; if(document.getElementById('statSaldo')) document.getElementById('statSaldo').innerText = 'Rp ' + (data.totalSaldoWarga || 0).toLocaleString('id-ID'); }
         function renderWarga(arr) { updateTopContributorUI(arr); if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400 font-bold">Belum ada warga terdaftar.</td></tr>'; return; } document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-4 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-4 font-medium">${w.Nama_KK}</td><td class="p-4 text-xs text-gray-500">${w.Alamat}</td><td class="p-4 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"><i class="fas fa-qrcode"></i></button></td></tr>`).join(''); }
         function exportWarga() { if(!adminDataMaster) return showToast("Data belum siap", "error"); const ws = XLSX.utils.json_to_sheet(adminDataMaster.warga); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Warga"); XLSX.writeFile(wb, "Data_Warga_BankJelantah.xlsx"); }
