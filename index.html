@@ -110,27 +110,31 @@
                 </div>
                 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-primary to-green-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statWarga">0</h4></div>
-                        <i class="fas fa-users absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-                    </div>
-                    <div class="bg-gradient-to-br from-secondary to-yellow-500 text-gray-900 p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-                        <div class="relative z-10"><p class="text-xs sm:text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statStok">0</h4></div>
-                        <i class="fas fa-oil-can absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-2xl sm:text-3xl font-black mt-1 sm:mt-2 break-words leading-tight" id="statSaldo">Rp 0</h4></div>
-                        <i class="fas fa-wallet absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-                    </div>
-                    <div class="bg-gradient-to-br from-pink-500 to-rose-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-center">
-                        <div class="relative z-10">
-                            <p class="text-xs sm:text-sm font-semibold opacity-90 mb-1"><i class="fas fa-crown text-yellow-300 mr-1"></i> Top Warga</p>
-                            <h4 class="text-lg sm:text-2xl font-black leading-tight break-words" id="topWargaNama" title="Memuat...">-</h4>
-                            <p class="text-[10px] sm:text-[11px] font-medium opacity-90 mt-1.5 uppercase tracking-wider">Terkumpul: <span id="topWargaJumlah" class="font-bold text-sm sm:text-base">0</span> Kg</p>
-                        </div>
-                        <i class="fas fa-award absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-                    </div>
-                </div>
+					<!-- Kartu 1: Oranye -->
+					<div class="bg-gradient-to-br from-orange-500 to-orange-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
+						<div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statWarga">0</h4></div>
+						<i class="fas fa-users absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+					</div>
+					<!-- Kartu 2: Hijau -->
+					<div class="bg-gradient-to-br from-green-500 to-green-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
+						<div class="relative z-10"><p class="text-xs sm:text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statStok">0</h4></div>
+						<i class="fas fa-oil-can absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+					</div>
+					<!-- Kartu 3: Biru -->
+					<div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
+						<div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-2xl sm:text-3xl font-black mt-1 sm:mt-2 break-words leading-tight" id="statSaldo">Rp 0</h4></div>
+						<i class="fas fa-wallet absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+					</div>
+					<!-- Kartu 4: Ungu (Biar lebih masuk dengan nuansa modern) -->
+					<div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-center">
+						<div class="relative z-10">
+							<p class="text-xs sm:text-sm font-semibold opacity-90 mb-1"><i class="fas fa-crown text-yellow-300 mr-1"></i> Top Warga</p>
+							<h4 class="text-lg sm:text-2xl font-black leading-tight break-words" id="topWargaNama" title="Memuat...">-</h4>
+							<p class="text-[10px] sm:text-[11px] font-medium opacity-90 mt-1.5 uppercase tracking-wider">Terkumpul: <span id="topWargaJumlah" class="font-bold text-sm sm:text-base">0</span> Kg</p>
+						</div>
+						<i class="fas fa-award absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+					</div>
+				</div>
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
@@ -181,13 +185,13 @@
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-secondary to-yellow-500 rounded-3xl p-6 sm:p-8 shadow-lg mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <p class="text-sm font-bold text-yellow-900 uppercase tracking-wider opacity-80">Sisa Stok Gudang</p>
-                        <h3 class="text-5xl font-black text-gray-900 mt-1 tracking-tight"><span id="stokTersediaMutasi">0</span> <span class="text-2xl">Kg</span></h3>
-                    </div>
-                    <i class="fas fa-oil-can text-6xl opacity-20"></i>
-                </div>
+                <div class="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-3xl p-6 sm:p-8 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+					<div>
+						<p class="text-sm font-bold text-orange-800 uppercase tracking-wider opacity-80">Sisa Stok Gudang</p>
+						<h3 class="text-5xl font-black text-orange-900 mt-1 tracking-tight"><span id="stokTersediaMutasi">0</span> <span class="text-2xl">Kg</span></h3>
+					</div>
+					<i class="fas fa-oil-can text-6xl text-orange-500 opacity-20"></i>
+				</div>
 
                 <div class="flex gap-2 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <input type="date" id="filterStartMutasi" onchange="applyFilterMutasi()" class="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-primary">
@@ -356,12 +360,13 @@
         }
 
         function showToast(msg, type='success') {
-            const cont = document.getElementById('toastContainer'); const t = document.createElement('div');
-            t.className = `flex items-center p-4 mb-2 shadow-xl rounded-xl toast-enter bg-white border-l-4 ${type==='success'?'border-primary':'border-red-500'}`;
-            t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle text-primary':'fa-exclamation-triangle text-red-500'} mr-3 text-xl"></i><span class="font-bold text-sm">${msg}</span>`;
-            cont.appendChild(t); requestAnimationFrame(() => { t.classList.remove('toast-enter'); t.classList.add('toast-show'); });
-            setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
-        }
+			const cont = document.getElementById('toastContainer'); const t = document.createElement('div');
+			// Memaksa warna hijau untuk sukses, merah untuk error (tidak pakai 'primary' lagi)
+			t.className = `flex items-center p-4 mb-2 shadow-xl rounded-xl toast-enter bg-white border-l-4 ${type==='success'?'border-green-500':'border-red-500'}`;
+			t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle text-green-500':'fa-exclamation-triangle text-red-500'} mr-3 text-xl"></i><span class="font-bold text-sm text-gray-800">${msg}</span>`;
+			cont.appendChild(t); requestAnimationFrame(() => { t.classList.remove('toast-enter'); t.classList.add('toast-show'); });
+			setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-enter'); setTimeout(() => t.remove(), 400); }, 3500);
+		}
 
         async function fetchAPI(actionName, payloadData = {}, retries = 2) {
             try {
@@ -675,7 +680,7 @@
         function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText=nama; document.getElementById('qrKodeWarga').innerText=kode; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=1f2937&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
         async function loadPetugasTasks(force = false) { if(!force) showLoading(true); let cachedStok = localStorage.getItem('globalStokCache'); if(cachedStok !== null) { let st = Number(cachedStok); document.getElementById('taskMinyak').innerText = st % 1 === 0 ? st : st.toFixed(1); } try{ const res = await fetchAPI('getPetugasTasks', {petugasId: currentUser.ID_User}); setTimeout(async () => { try { const resDash = await fetchAPI('getAdminDashboard'); if(resDash && resDash.stokTersedia !== undefined) { let globalStok = Number(resDash.stokTersedia); document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1); localStorage.setItem('globalStokCache', globalStok); } else { const resMut = await fetchAPI('getAdminMutasiData'); if(resMut && resMut.stokTersedia !== undefined) { let globalStok = Number(resMut.stokTersedia); document.getElementById('taskMinyak').innerText = globalStok % 1 === 0 ? globalStok : globalStok.toFixed(1); localStorage.setItem('globalStokCache', globalStok); } } } catch(err) {} }, 1000); if(res.success){ currentTasks = res.tasks||[]; localStorage.setItem('petugasTasks', JSON.stringify(res)); renderTasksData(res); } } catch(e){ showToast("Gagal update jadwal", "error"); } if(!force) showLoading(false); }
         function renderTasksData(res) { if(!res || !res.success || !res.tasks || res.tasks.length === 0) { document.getElementById('noTaskMsg').classList.remove('hide'); document.getElementById('taskList').innerHTML = ''; document.getElementById('taskTotal').innerText = '0'; document.getElementById('taskSelesai').innerText = '0'; document.getElementById('taskBelum').innerText = '0'; return; } document.getElementById('noTaskMsg').classList.add('hide'); let rawTasks = res.tasks; let newestId = null; let maxDate = 0; rawTasks.forEach(t => { let val = t.ID_Jadwal || t.Tanggal_Jadwal || t.Tanggal; if (t.Tanggal_Jadwal || t.Tanggal) { let d = new Date(t.Tanggal_Jadwal || t.Tanggal).getTime(); if (d > maxDate) { maxDate = d; newestId = val; } } else { if (!newestId || val > newestId) newestId = val; } }); if(newestId) { currentTasks = rawTasks.filter(t => (t.ID_Jadwal || t.Tanggal_Jadwal || t.Tanggal) === newestId); } else { currentTasks = rawTasks; } let selesai = 0; currentTasks.forEach(task => { if(task.Status !== 'Belum Dikunjungi') selesai++; }); document.getElementById('taskTotal').innerText = currentTasks.length; document.getElementById('taskSelesai').innerText = selesai; document.getElementById('taskBelum').innerText = currentTasks.length - selesai; renderTaskList(); }
-        function renderTaskList() { const ct = document.getElementById('taskList'); const s = document.getElementById('searchTask') ? document.getElementById('searchTask').value.toLowerCase() : ''; let f = currentTasks.filter(t => t.Nama_KK.toLowerCase().includes(s) || t.Kode_Warga.toLowerCase().includes(s)); f.sort((a,b) => (a.Status==='Belum Dikunjungi'?0:1) - (b.Status==='Belum Dikunjungi'?0:1)); ct.innerHTML = f.map(t=> { let isDone = t.Status !== 'Belum Dikunjungi'; return `<div class="bg-white p-5 rounded-2xl border ${isDone?'opacity-60 border-gray-100':'border-l-4 border-l-primary shadow-sm hover:-translate-y-1'} transition-transform flex justify-between"><div class="flex-1"><span class="text-[9px] uppercase tracking-widest px-2 py-1 border rounded-lg ${isDone?'bg-green-50 text-green-700':'bg-gray-50 text-gray-500'} font-bold mb-3 inline-block">${t.Status}</span><h4 class="font-black text-lg text-gray-900 leading-none">${t.Nama_KK}</h4><p class="text-xs font-bold text-gray-400 tracking-widest mt-1.5">${t.Kode_Warga}</p></div>${!isDone?`<button onclick='bukaKunjungan(${JSON.stringify(t)})' class="bg-secondary text-yellow-900 font-black px-5 rounded-xl shadow-md">BUKA</button>`:'<div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center self-center"><i class="fas fa-check text-green-500 text-xl"></i></div>'}</div>`}).join(''); }
+        function renderTaskList() { const ct = document.getElementById('taskList'); const s = document.getElementById('searchTask') ? document.getElementById('searchTask').value.toLowerCase() : ''; let f = currentTasks.filter(t => t.Nama_KK.toLowerCase().includes(s) || t.Kode_Warga.toLowerCase().includes(s)); f.sort((a,b) => (a.Status==='Belum Dikunjungi'?0:1) - (b.Status==='Belum Dikunjungi'?0:1)); ct.innerHTML = f.map(t=> { let isDone = t.Status !== 'Belum Dikunjungi'; return `<div class="bg-white p-5 rounded-2xl border ${isDone?'opacity-60 border-gray-100':'border-l-4 border-l-primary shadow-sm hover:-translate-y-1'} transition-transform flex justify-between"><div class="flex-1"><span class="text-[9px] uppercase tracking-widest px-2 py-1 border rounded-lg ${isDone?'bg-green-50 text-green-700':'bg-gray-50 text-gray-500'} font-bold mb-3 inline-block">${t.Status}</span><h4 class="font-black text-lg text-gray-900 leading-none">${t.Nama_KK}</h4><p class="text-xs font-bold text-gray-400 tracking-widest mt-1.5">${t.Kode_Warga}</p></div>${!isDone?`<button onclick='bukaKunjungan(${JSON.stringify(t)})' class="bg-primary hover:bg-orange-600 text-white font-black px-6 py-2.5 rounded-xl shadow-md transition-colors">BUKA</button>`:'<div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center self-center"><i class="fas fa-check text-green-500 text-xl"></i></div>'}</div>`}).join(''); }
         function bukaKunjungan(t) { activeKunjungan=t; document.getElementById('modalWargaNama').innerText=t.Nama_KK; document.getElementById('modalWargaAlamat').innerText=t.Alamat; document.getElementById('modalTransaksi').classList.remove('hide'); }
         function setStatus(s, el) { selectedStatus=s; document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold transition-all'); el.className='status-btn bg-green-50 border-2 border-primary text-primary py-3 rounded-2xl font-black shadow-inner scale-95 transition-all'; document.getElementById('formAmbilMinyak').classList.toggle('hide', s!=='Sudah Diambil'); }
         function kalkulasiHarga() { const b=parseFloat(document.getElementById('inputBerat').value)||0, tot=b*systemSettings.Harga_Per_Kg; document.getElementById('labelTotal').innerText='Rp'+tot.toLocaleString('id-ID'); document.getElementById('hakWarga').innerText='Rp'+(tot*(systemSettings.Persentase_Warga/100)).toLocaleString('id-ID'); document.getElementById('hakKas').innerText='Rp'+(tot*(systemSettings.Persentase_Kas/100)).toLocaleString('id-ID'); }
