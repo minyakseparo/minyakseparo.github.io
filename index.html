@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="docTitle">Bank Jelantah</title>
+    <title id="docTitle">Minyak Separo</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#16a34a">
@@ -53,11 +53,11 @@
     <header id="appHeader" class="hide bg-white border-b border-gray-100 p-4 px-6 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-3">
             <div class="bg-primary/10 p-2 rounded-xl h-10 w-10 flex items-center justify-center overflow-hidden">
-                <img id="headerAppIcon" src="https://cdn-icons-png.flaticon.com/512/8892/8892404.png" class="w-full h-full object-contain hide">
-                <i id="headerAppIconFA" class="fas fa-leaf text-primary text-xl"></i>
+                <img id="headerAppIcon" src="LINK_ATAU_BASE64_LOGO_ANDA_DISINI" class="w-full h-full object-contain">
+                <i id="headerAppIconFA" class="fas fa-leaf text-primary text-xl hide"></i>
             </div>
             <div>
-                <h1 id="headerAppName" class="font-extrabold tracking-tight text-lg text-gray-900 leading-none uppercase">BANK JELANTAH</h1>
+                <h1 id="headerAppName" class="font-extrabold tracking-tight text-lg text-gray-900 leading-none uppercase">MINYAK SEPARO</h1>
                 <p class="text-[10px] text-primary font-bold tracking-wider uppercase mt-0.5" id="userRoleDisplay">Role</p>
             </div>
         </div>
@@ -69,10 +69,10 @@
         <div class="absolute inset-0 bg-green-900/80 backdrop-blur-sm"></div>
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center relative z-10">
             <div class="w-24 h-24 bg-gradient-to-br from-primary to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg overflow-hidden p-2">
-                <img id="loginAppIcon" src="" class="w-full h-full object-contain hide">
-                <i id="loginAppIconFA" class="fas fa-recycle text-5xl text-white"></i>
+                <img id="loginAppIcon" src="LINK_ATAU_BASE64_LOGO_ANDA_DISINI" class="w-full h-full object-contain">
+                <i id="loginAppIconFA" class="fas fa-recycle text-5xl text-white hide"></i>
             </div>
-            <h2 id="loginAppName" class="text-3xl font-black mb-2 tracking-tight uppercase">BANK JELANTAH</h2>
+            <h2 id="loginAppName" class="text-3xl font-black mb-2 tracking-tight uppercase">MINYAK SEPARO</h2>
             <p class="text-sm text-gray-500 mb-8 font-medium">Sistem Pengelolaan Terpadu</p>
             
             <div class="space-y-4 text-left">
@@ -339,7 +339,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxaQl2tXxfdg_ptCle8YZDyh0WfBBCdKC61P536jlImDHpiNPe3VwQLowTUtljTvZPa/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwJuRXY0RjrLa3ly3xg2DrbxM7eGgdpW5dN1bmV74v7kBUH5x7pLzkz7eqUd6bau3SX/exec";
         
         let currentUser = null, systemSettings = null, currentTasks = [];
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
@@ -416,7 +416,7 @@
         }
 
         function applySystemSettingsUI() {
-            let appName = (systemSettings && systemSettings.Nama_Aplikasi) ? systemSettings.Nama_Aplikasi : "BANK JELANTAH";
+            let appName = (systemSettings && systemSettings.Nama_Aplikasi) ? systemSettings.Nama_Aplikasi : "MINYAK SEPARO";
             let appIcon = (systemSettings && systemSettings.Icon_URL) ? systemSettings.Icon_URL : "";
 
             document.getElementById('docTitle').innerText = appName;
@@ -459,8 +459,18 @@
         }
 
         async function checkSession() {
+            // 1. Tampilkan dari memori lokal dulu agar tidak loading lama
             systemSettings = JSON.parse(localStorage.getItem('systemSettings')||'{}');
             applySystemSettingsUI();
+
+            // 2. Tarik pengaturan terbaru langsung dari Database di latar belakang
+            fetchAPI('getSettings').then(res => {
+                if(res && res.success && res.settings) {
+                    systemSettings = res.settings;
+                    localStorage.setItem('systemSettings', JSON.stringify(systemSettings));
+                    applySystemSettingsUI(); // Terapkan pembaruan logo & nama
+                }
+            }).catch(e => console.log("Menunggu koneksi untuk sinkronisasi pengaturan..."));
 
             const user = localStorage.getItem('currentUser');
             if(user) {
@@ -530,7 +540,12 @@
             } catch(e){ showLoading(false); showToast("Koneksi gagal. Memulai ulang...", "error"); }
         }
 
-        function logout() { localStorage.clear(); location.reload(); }
+        function logout() { 
+            let savedSettings = localStorage.getItem('systemSettings'); 
+            localStorage.clear(); 
+            if(savedSettings) localStorage.setItem('systemSettings', savedSettings);
+            location.reload(); 
+        }
 
         function switchAdminTab(id) {
             document.querySelectorAll('.admin-tab').forEach(e => e.classList.add('hide'));
