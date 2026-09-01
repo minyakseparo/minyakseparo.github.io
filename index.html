@@ -676,8 +676,73 @@
         function bukaModalWarga() { closeModal('modalAddWarga'); document.getElementById('modalAddWarga').classList.remove('hide'); }
         async function submitAddWarga() { const n=document.getElementById('addNamaWarga').value, a=document.getElementById('addAlamatWarga').value, hp=document.getElementById('addHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalAddWarga'); try { let newId = "WGR-Baru"; if(adminDataMaster && adminDataMaster.warga) { adminDataMaster.warga.push({Kode_Warga: newId, Nama_KK: n, Alamat: a, Saldo_Rp: 0, Total_Minyak_Kg: 0}); localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster)); if(!document.getElementById('adminWargaView').classList.contains('hide')) renderWarga(adminDataMaster.warga); } if(cacheDashboard) { cacheDashboard.totalWarga = (cacheDashboard.totalWarga || 0) + 1; localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard)); if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard); } await fetchAPI('simpanWargaBaru', {nama:n, alamat:a, hp:hp}); showLoading(false); showToast("Warga berhasil ditambahkan!"); syncSemuaLatarBelakang(false); } catch(e){ showLoading(false); showToast("Gagal menyimpan data", "error"); } }
         function siapkanEditWarga(kode) { const w = adminDataMaster.warga.find(x => x.Kode_Warga === kode); if(!w) return; document.getElementById('editKodeWarga').value = w.Kode_Warga; document.getElementById('editNamaWarga').value = w.Nama_KK; document.getElementById('editAlamatWarga').value = w.Alamat; document.getElementById('editHpWarga').value = w.No_HP || ''; document.getElementById('modalEditWarga').classList.remove('hide'); }
-        async function submitEditWarga() { const k = document.getElementById('editKodeWarga').value, n = document.getElementById('editNamaWarga').value, a = document.getElementById('editAlamatWarga').value, hp = document.getElementById('editHpWarga').value; if(!n||!a) return showToast("Isi form!", "error"); showLoading(true); closeModal('modalEditWarga'); try { await fetchAPI('editWarga', {kode:k, nama:n, alamat:a, hp:hp}); showToast("Warga berhasil diupdate!"); syncSemuaLatarBelakang(true); } catch(e){ showLoading(false); showToast("Gagal update data", "error"); } }
-        async function konfirmasiHapusWarga(kode) { if(confirm(`Yakin ingin menghapus warga ${kode}?\nData transaksi akan kehilangan referensi nama warga ini.`)) { showLoading(true); try { await fetchAPI('hapusWarga', {kode:kode}); showToast("Warga dihapus!"); syncSemuaLatarBelakang(true); } catch(e){ showLoading(false); showToast("Gagal hapus data", "error"); } } }
+        async function submitEditWarga() { 
+            const k = document.getElementById('editKodeWarga').value, 
+                  n = document.getElementById('editNamaWarga').value, 
+                  a = document.getElementById('editAlamatWarga').value, 
+                  hp = document.getElementById('editHpWarga').value; 
+            
+            if(!n || !a) return showToast("Isi form!", "error"); 
+            
+            showLoading(true); 
+            closeModal('modalEditWarga'); 
+            
+            try { 
+                // 1. Ubah data di memori layar (UI) agar langsung berubah tanpa harus refresh
+                if(adminDataMaster && adminDataMaster.warga) {
+                    let index = adminDataMaster.warga.findIndex(w => w.Kode_Warga === k);
+                    if(index !== -1) {
+                        adminDataMaster.warga[index].Nama_KK = n;
+                        adminDataMaster.warga[index].Alamat = a;
+                        adminDataMaster.warga[index].No_HP = hp;
+                        localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
+                        if(!document.getElementById('adminWargaView').classList.contains('hide')) {
+                            renderWarga(adminDataMaster.warga);
+                        }
+                    }
+                }
+
+                // 2. Kirim ke Spreadsheet
+                await fetchAPI('editWarga', {kode:k, nama:n, alamat:a, hp:hp}); 
+                showLoading(false);
+                showToast("Warga berhasil diupdate!"); 
+                syncSemuaLatarBelakang(false); // Tarik ulang data di latar belakang
+            } catch(e) { 
+                showLoading(false); 
+                showToast("Gagal update data", "error"); 
+            } 
+        }
+
+        async function konfirmasiHapusWarga(kode) { 
+            if(confirm(`Yakin ingin menghapus warga ${kode}?\nData transaksi akan kehilangan referensi nama warga ini.`)) { 
+                showLoading(true); 
+                try { 
+                    // 1. Hapus dari memori layar agar langsung hilang dari tabel
+                    if(adminDataMaster && adminDataMaster.warga) {
+                        adminDataMaster.warga = adminDataMaster.warga.filter(w => w.Kode_Warga !== kode);
+                        localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster));
+                        if(!document.getElementById('adminWargaView').classList.contains('hide')) {
+                            renderWarga(adminDataMaster.warga);
+                        }
+                    }
+                    // Kurangi total warga di dashboard
+                    if(cacheDashboard) {
+                        cacheDashboard.totalWarga = (cacheDashboard.totalWarga || 1) - 1;
+                        localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard));
+                    }
+
+                    // 2. Hapus dari Spreadsheet
+                    await fetchAPI('hapusWarga', {kode:kode}); 
+                    showLoading(false);
+                    showToast("Warga dihapus!"); 
+                    syncSemuaLatarBelakang(false); 
+                } catch(e) { 
+                    showLoading(false); 
+                    showToast("Gagal hapus data", "error"); 
+                } 
+            } 
+        }
+		
         function cetakQRSatu(kode, nama) { bukaJendelaCetak([{kode: kode, nama: nama}]); }
         function cetakQRSemua() { if(!adminDataMaster || !adminDataMaster.warga || adminDataMaster.warga.length === 0) return showToast("Tidak ada data warga", "error"); const dataCetak = adminDataMaster.warga.map(w => ({kode: w.Kode_Warga, nama: w.Nama_KK})); bukaJendelaCetak(dataCetak); }
         function bukaJendelaCetak(dataArr) { let html = `<html><head><title>Cetak QR Warga</title><style>body { font-family: 'Inter', sans-serif; text-align: center; padding: 20px; } .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; } .card { border: 2px dashed #ccc; padding: 15px; border-radius: 15px; width: 220px; page-break-inside: avoid; } .card img { width: 180px; height: 180px; margin: 0 auto; } .nama { font-weight: 900; margin-top: 15px; font-size: 18px; text-transform: uppercase; color: #111; } .kode { font-size: 14px; font-weight: bold; color: #ea580c; margin-top: 5px; letter-spacing: 2px; } @media print { @page { margin: 1cm; } body { padding: 0; } .card { border: 2px solid #000; } }</style></head><body><h2 style="margin-bottom:30px;">KARTU QR WARGA</h2><div class="grid">`; dataArr.forEach(d => { html += `<div class="card"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&data=${d.kode}"><div class="nama">${d.nama}</div><div class="kode">${d.kode}</div></div>`; }); html += `</div><script>setTimeout(() => { window.print(); }, 1500);<\/script></body></html>`; let win = window.open('', '_blank'); win.document.write(html); win.document.close(); }
