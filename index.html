@@ -121,32 +121,38 @@
                     <button onclick="syncSemuaLatarBelakang(true)" class="bg-white border border-gray-200 text-gray-700 hover:bg-green-50 hover:text-primary py-2 px-4 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center"><i class="fas fa-sync-alt mr-2"></i> Sinkronisasi Total</button>
                 </div>
                 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8">
-					<!-- Kartu 1: Oranye -->
-					<div class="bg-gradient-to-br from-orange-500 to-orange-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-						<div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statWarga">0</h4></div>
-						<i class="fas fa-users absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-					</div>
-					<!-- Kartu 2: Hijau -->
-					<div class="bg-gradient-to-br from-green-500 to-green-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-						<div class="relative z-10"><p class="text-xs sm:text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statStok">0</h4>Kg</div>
-						<i class="fas fa-oil-can absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-					</div>
-					<!-- Kartu 3: Biru -->
-					<div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden">
-						<div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-2xl sm:text-3xl font-black mt-1 sm:mt-2 break-words leading-tight" id="statSaldo">Rp 0</h4></div>
-						<i class="fas fa-wallet absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-					</div>
-					<!-- Kartu 4: Ungu (Biar lebih masuk dengan nuansa modern) -->
-					<div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-center">
-						<div class="relative z-10">
-							<p class="text-xs sm:text-sm font-semibold opacity-90 mb-1"><i class="fas fa-crown text-yellow-300 mr-1"></i> Top Warga</p>
-							<h4 class="text-lg sm:text-2xl font-black leading-tight break-words" id="topWargaNama" title="Memuat...">-</h4>
-							<p class="text-[10px] sm:text-[11px] font-medium opacity-90 mt-1.5 uppercase tracking-wider">Terkumpul: <span id="topWargaJumlah" class="font-bold text-sm sm:text-base">0</span> Kg</p>
-						</div>
-						<i class="fas fa-award absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
-					</div>
-				</div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4">
+                    <!-- Kartu 1: Oranye Solid -->
+                    <div class="bg-gradient-to-br from-orange-400 to-orange-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden hover:-translate-y-1 transition-transform cursor-default">
+                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Warga</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words" id="statWarga">0</h4></div>
+                        <i class="fas fa-users absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 2: Hijau Solid -->
+                    <div class="bg-gradient-to-br from-green-400 to-green-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden hover:-translate-y-1 transition-transform cursor-default">
+                        <div class="relative z-10"><p class="text-xs sm:text-sm font-bold opacity-90">Stok Gudang</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words"><span id="statStok">0</span> <span class="text-lg">Kg</span></h4></div>
+                        <i class="fas fa-oil-can absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 3: Emas -->
+                    <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden hover:-translate-y-1 transition-transform cursor-default">
+                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Saldo</p><h4 class="text-2xl sm:text-3xl font-black mt-1 sm:mt-2 break-words leading-tight" id="statSaldo">Rp 0</h4></div>
+                        <i class="fas fa-wallet absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+                    </div>
+                    <!-- Kartu 4: Total Penjualan -->
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden hover:-translate-y-1 transition-transform cursor-default">
+                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Terjual</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words"><span id="statTerjual">0</span> <span class="text-lg">Kg</span></h4></div>
+                        <i class="fas fa-truck-loading absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
+                    </div>
+                </div>
+
+                <!-- Kartu 5: Top Warga dibuat memanjang (Banner) -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-row items-center justify-between hover:-translate-y-1 transition-transform cursor-default mb-8">
+                    <div class="relative z-10 flex-1">
+                        <p class="text-xs sm:text-sm font-semibold opacity-90 mb-1"><i class="fas fa-crown text-yellow-400 mr-1"></i> Top Warga Berkontribusi</p>
+                        <h4 class="text-xl sm:text-3xl font-black leading-tight break-words text-orange-400" id="topWargaNama" title="Memuat...">-</h4>
+                        <p class="text-[10px] sm:text-[11px] font-medium opacity-70 mt-1 uppercase tracking-wider">Terkumpul: <span id="topWargaJumlah" class="font-bold text-sm sm:text-base text-white">0</span> Kg</p>
+                    </div>
+                    <i class="fas fa-award text-6xl sm:text-8xl opacity-10 mr-2 sm:mr-6"></i>
+                </div>
 
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <h3 class="font-extrabold text-gray-800 mb-4 text-lg">Grafik Transaksi Masuk (7 Hari Terakhir)</h3>
@@ -317,7 +323,7 @@
         </div>
     </div>
     
-    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-2">Jual ke Pengepul</h3><p class="mb-6 text-sm text-gray-500 bg-yellow-50 inline-block px-3 py-1 rounded-lg border">Gudang: <strong id="infoStokJual" class="text-yellow-600">0</strong> Kg</p><div class="space-y-4"><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border rounded-xl" placeholder="0 Kg"><input type="text" id="addNamaPengepul" class="w-full p-3.5 border bg-gray-50 rounded-xl" placeholder="Nama Pengepul"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black shadow-md">Proses Penjualan</button></div></div></div>
+    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-2">Jual ke Pengepul</h3><p class="mb-6 text-sm text-gray-500 bg-yellow-50 inline-block px-3 py-1 rounded-lg border">Gudang: <strong id="infoStokJual" class="text-yellow-600">0</strong> Kg</p><div class="space-y-4"><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border rounded-xl outline-none focus:border-primary" placeholder="0 Kg"><input type="number" id="addHargaJual" class="w-full p-3.5 border bg-gray-50 rounded-xl outline-none focus:border-primary" placeholder="Harga Jual per Kg (Rp)"><input type="text" id="addNamaPengepul" class="w-full p-3.5 border bg-gray-50 rounded-xl outline-none focus:border-primary" placeholder="Nama Pengepul"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold hover:bg-gray-50">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black shadow-md hover:bg-gray-800 transition-colors">Proses Penjualan</button></div></div></div>
     
     <div id="modalTransaksi" class="hide fixed inset-0 glass-overlay z-50 flex items-end sm:items-center justify-center p-4 sm:p-0"><div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto custom-scrollbar shadow-2xl"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-black">Pengambilan</h3><button onclick="closeModal('modalTransaksi')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div class="bg-gray-50 p-4 rounded-2xl border mb-6 flex gap-4"><div class="bg-white w-12 h-12 rounded-full shadow-sm flex items-center justify-center"><i class="fas fa-home text-primary"></i></div><div><h4 class="font-black text-lg" id="modalWargaNama">-</h4><p id="modalWargaAlamat" class="text-xs text-gray-500 font-bold"></p></div></div><div class="grid grid-cols-2 gap-3 mb-6"><button onclick="setStatus('Sudah Diambil', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Minyak Ada</button><button onclick="setStatus('Tidak Ada Minyak', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Kosong</button><button onclick="setStatus('Warga Tidak Ada', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Tak Ada Org</button><button onclick="setStatus('Ditunda', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Ditunda</button></div><div id="formAmbilMinyak" class="hide space-y-4 mb-8"><input type="number" step="0.1" id="inputBerat" oninput="kalkulasiHarga()" class="w-full text-4xl font-black text-center p-4 border-2 border-yellow-200 bg-yellow-50 rounded-2xl" placeholder="0.0"><div class="bg-gray-900 text-white p-5 rounded-2xl"><h3 class="text-3xl font-black text-center text-secondary mb-3" id="labelTotal">Rp0</h3><div class="flex justify-between text-xs pt-3 border-t border-gray-700"><div class="w-1/2 text-center border-r border-gray-700">Warga: <strong id="hakWarga"></strong></div><div class="w-1/2 text-center">Kas RT: <strong id="hakKas"></strong></div></div></div></div><button onclick="simpanKunjungan()" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg">SIMPAN DATA</button></div></div>
     
@@ -360,7 +366,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwub0seidO8_-0xJmR67p2aSCf4rVRQKfCEhpdOFXt0hy-Y3rru9Kt3sstXRk8zzZkf/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyBqaz4G3oItd-cYtIFzg0UhMuxgKVE9_kIIntuHiImR2SYdUOQCbDdTVaS2dUvalJn/exec";
         
         let currentUser = null, systemSettings = null, currentTasks = [];
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
@@ -678,7 +684,13 @@
         // ================= CRUD REGULER & UTILITAS =================
 		function renderWarga(arr) { updateTopContributorUI(arr); if (!arr || arr.length === 0) { document.getElementById('tableWarga').innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-400 font-bold">Belum ada warga terdaftar.</td></tr>'; return; } document.getElementById('tableWarga').innerHTML = arr.map(w => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors group"><td class="p-4 font-bold text-gray-800">${w.Kode_Warga}</td><td class="p-4 font-medium">${w.Nama_KK}</td><td class="p-4 text-xs text-gray-500">${w.Alamat}</td><td class="p-4 text-right font-black text-primary">Rp${Number(w.Saldo_Rp).toLocaleString('id-ID')}</td><td class="p-4 text-center"><button onclick="bukaQR('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-blue-500 bg-blue-50 hover:bg-blue-600 hover:text-white p-2 rounded-lg transition-colors"><i class="fas fa-qrcode"></i></button><button onclick="cetakQRSatu('${w.Kode_Warga}', '${w.Nama_KK}')" class="text-indigo-500 bg-indigo-50 hover:bg-indigo-600 hover:text-white p-2 rounded-lg transition-colors ml-1" title="Cetak QR"><i class="fas fa-print"></i></button></td><td class="p-4 text-center"><button onclick="siapkanEditWarga('${w.Kode_Warga}')" class="text-orange-500 bg-orange-50 hover:bg-orange-600 hover:text-white p-2 rounded-lg transition-colors" title="Edit"><i class="fas fa-edit"></i></button><button onclick="konfirmasiHapusWarga('${w.Kode_Warga}')" class="text-red-500 bg-red-50 hover:bg-red-600 hover:text-white p-2 rounded-lg transition-colors ml-1" title="Hapus"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
         function renderChart(mutasiArr) { const ctx = document.getElementById('trendChart'); if(!ctx) return; let lbl = ['Belum Ada Transaksi']; let val = [0]; if (mutasiArr && Array.isArray(mutasiArr) && mutasiArr.length > 0) { const sums = {}; mutasiArr.filter(m => m.Jenis === 'Masuk').forEach(m => { let d = String(m.Tanggal).slice(5, 10); sums[d] = (sums[d] || 0) + parseFloat(m.Jumlah_Kg || 0); }); const keys = Object.keys(sums); if (keys.length > 0) { lbl = keys.slice(0, 7).reverse(); val = Object.values(sums).slice(0, 7).reverse(); } } if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'line', data: { labels: lbl, datasets: [{ label: 'Minyak Masuk (Kg)', data: val, borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.2)', fill: true, tension: 0.4 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } } } }); }
-        function renderDashboard(data) { if (!data) return; if(document.getElementById('statWarga')) document.getElementById('statWarga').innerText = data.totalWarga || 0; if(document.getElementById('statStok')) document.getElementById('statStok').innerText = data.stokTersedia || 0; if(document.getElementById('statSaldo')) document.getElementById('statSaldo').innerText = 'Rp ' + (data.totalSaldoWarga || 0).toLocaleString('id-ID'); }
+        function renderDashboard(data) { 
+            if (!data) return; 
+            if(document.getElementById('statWarga')) document.getElementById('statWarga').innerText = data.totalWarga || 0; 
+            if(document.getElementById('statStok')) document.getElementById('statStok').innerText = data.stokTersedia || 0; 
+            if(document.getElementById('statSaldo')) document.getElementById('statSaldo').innerText = 'Rp ' + (data.totalSaldoWarga || 0).toLocaleString('id-ID'); 
+            if(document.getElementById('statTerjual')) document.getElementById('statTerjual').innerText = data.totalMinyakTerjual || 0;
+        }
         function exportWarga() { if(!adminDataMaster) return showToast("Data belum siap", "error"); const ws = XLSX.utils.json_to_sheet(adminDataMaster.warga); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Warga"); XLSX.writeFile(wb, "Data_Warga_BankJelantah.xlsx"); }
         function exportMutasi() { if(!cacheMutasi) return showToast("Data belum siap", "error"); const ws = XLSX.utils.json_to_sheet(cacheMutasi.mutasi); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Mutasi"); XLSX.writeFile(wb, "Data_Mutasi_BankJelantah.xlsx"); }
         function applyFilterMutasi() { if(!cacheMutasi || !cacheMutasi.mutasi) return; let arr = cacheMutasi.mutasi; const start = document.getElementById('filterStartMutasi').value; const end = document.getElementById('filterEndMutasi').value; if(start) arr = arr.filter(m => new Date(m.Tanggal) >= new Date(start)); if(end) { let e = new Date(end); e.setHours(23,59,59); arr = arr.filter(m => new Date(m.Tanggal) <= e); } document.getElementById('stokTersediaMutasi').innerText = cacheMutasi.stokTersedia; if(arr.length === 0) { document.getElementById('tableMutasi').innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 font-bold">Tidak ada data transaksi.</td></tr>'; return; } document.getElementById('tableMutasi').innerHTML = arr.map(m => `<tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors"><td class="p-4 text-xs font-bold text-gray-500">${String(m.Tanggal).slice(0,10)}</td><td class="p-4"><span class="px-2 py-1 text-[10px] font-black uppercase rounded ${m.Jenis==='Masuk'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${m.Jenis}</span></td><td class="p-4 text-center font-black text-lg text-gray-800">${m.Jumlah_Kg}</td><td class="p-4 text-xs text-gray-500 font-medium">${m.Keterangan}</td></tr>`).join(''); }
@@ -759,7 +771,39 @@
         function cetakQRSemua() { if(!adminDataMaster || !adminDataMaster.warga || adminDataMaster.warga.length === 0) return showToast("Tidak ada data warga", "error"); const dataCetak = adminDataMaster.warga.map(w => ({kode: w.Kode_Warga, nama: w.Nama_KK})); bukaJendelaCetak(dataCetak); }
         function bukaJendelaCetak(dataArr) { let html = `<html><head><title>Cetak QR Warga</title><style>body { font-family: 'Inter', sans-serif; text-align: center; padding: 20px; } .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; } .card { border: 2px dashed #ccc; padding: 15px; border-radius: 15px; width: 220px; page-break-inside: avoid; } .card img { width: 180px; height: 180px; margin: 0 auto; } .nama { font-weight: 900; margin-top: 15px; font-size: 18px; text-transform: uppercase; color: #111; } .kode { font-size: 14px; font-weight: bold; color: #ea580c; margin-top: 5px; letter-spacing: 2px; } @media print { @page { margin: 1cm; } body { padding: 0; } .card { border: 2px solid #000; } }</style></head><body><h2 style="margin-bottom:30px;">KARTU QR WARGA</h2><div class="grid">`; dataArr.forEach(d => { html += `<div class="card"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&data=${d.kode}"><div class="nama">${d.nama}</div><div class="kode">${d.kode}</div></div>`; }); html += `</div><script>setTimeout(() => { window.print(); }, 1500);<\/script></body></html>`; let win = window.open('', '_blank'); win.document.write(html); win.document.close(); }
 		function bukaModalJual() { const stok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0; if(stok <= 0) return showToast("Stok gudang masih kosong/0 Kg!", "error"); document.getElementById('infoStokJual').innerText = stok; document.getElementById('modalJualMinyak').classList.remove('hide'); }
-        async function submitJualMinyak() { const b=parseFloat(document.getElementById('addBeratJual').value), p=document.getElementById('addNamaPengepul').value; if(!b||!p) return showToast("Lengkapi form!", "error"); const currentStok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0; if(b > currentStok) return showToast("Jumlah jual melebihi stok!", "error"); showLoading(true); closeModal('modalJualMinyak'); try { if(cacheMutasi && cacheMutasi.mutasi) { cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: "Pengepul: " + p}); cacheMutasi.stokTersedia -= b; localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi)); if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); } } if(cacheDashboard) { cacheDashboard.stokTersedia -= b; localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard)); if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard); } await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p}); showLoading(false); showToast("Minyak berhasil dijual!"); syncSemuaLatarBelakang(false); } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); } }
+        async function submitJualMinyak() { 
+            const b = parseFloat(document.getElementById('addBeratJual').value);
+            const p = document.getElementById('addNamaPengepul').value;
+            const h = parseFloat(document.getElementById('addHargaJual').value);
+
+            if(!b || !p || !h) return showToast("Lengkapi form & harga per Kg!", "error"); 
+            const currentStok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0; 
+            if(b > currentStok) return showToast("Jumlah jual melebihi stok!", "error"); 
+            
+            showLoading(true); closeModal('modalJualMinyak'); 
+            
+            try { 
+                const totalRp = b * h;
+                const ketFormat = `Pengepul: ${p} (Rp${h.toLocaleString('id-ID')}/Kg) - Total: Rp${totalRp.toLocaleString('id-ID')}`;
+
+                if(cacheMutasi && cacheMutasi.mutasi) { 
+                    cacheMutasi.mutasi.unshift({Tanggal: new Date().toISOString(), Jenis: "Keluar", Jumlah_Kg: b, Keterangan: ketFormat}); 
+                    cacheMutasi.stokTersedia -= b; 
+                    localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi)); 
+                    if(!document.getElementById('adminMutasiView').classList.contains('hide')) { applyFilterMutasi(); } 
+                } 
+                if(cacheDashboard) { 
+                    cacheDashboard.stokTersedia -= b; 
+                    cacheDashboard.totalMinyakTerjual = (cacheDashboard.totalMinyakTerjual || 0) + b;
+                    localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard)); 
+                    if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard); 
+                } 
+                await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p, harga:h}); 
+                showLoading(false); showToast("Minyak berhasil dijual!"); syncSemuaLatarBelakang(false); 
+            } catch(e) { 
+                showLoading(false); showToast("Gagal memproses", "error"); 
+            } 
+        }
         function bukaModalJadwal() { if(!adminDataMaster) return showToast("Menunggu data...", "error"); const sel = document.getElementById('addPetugasJadwal'); sel.innerHTML = adminDataMaster.petugas.map(p=>`<option value="${p.ID_User}">${p.Nama_Lengkap}</option>`).join(''); const searchInput = document.getElementById('searchWargaJadwal'); if(searchInput) searchInput.value = ''; isAllSelected = false; const btnAll = document.getElementById('btnSelectAllWarga'); if(btnAll) { btnAll.innerText = "Pilih Semua"; btnAll.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-4 rounded-xl border border-gray-200 transition-colors whitespace-nowrap"; } const cb = document.getElementById('listCheckboxWarga'); cb.innerHTML = adminDataMaster.warga.map(w=>`<label class="flex p-3 border border-gray-100 rounded-xl mb-2 items-center hover:bg-green-50 cursor-pointer transition-colors"><input type="checkbox" value="${w.Kode_Warga}" class="cb-warga mr-3 w-4 h-4 text-primary"><span class="font-bold text-sm">${w.Nama_KK}</span></label>`).join(''); document.getElementById('modalAddJadwal').classList.remove('hide'); }
         async function submitAddJadwal() { const t=document.getElementById('addTglJadwal').value, p=document.getElementById('addPetugasJadwal').value, wIds=Array.from(document.querySelectorAll('.cb-warga:checked')).map(c=>c.value); if(!t||!p||!wIds.length) return showToast("Pilih minimal 1 warga!","error"); showLoading(true); closeModal('modalAddJadwal'); try { if(cacheJadwal && cacheJadwal.jadwal) { const petName = document.getElementById('addPetugasJadwal').options[document.getElementById('addPetugasJadwal').selectedIndex].text; cacheJadwal.jadwal.unshift({ID_Jadwal: "JDW-Baru", Tanggal: t, Nama_Petugas: petName, Status: "Berjalan", Target: wIds.length, Selesai: 0}); localStorage.setItem('cacheJadwal', JSON.stringify(cacheJadwal)); if(!document.getElementById('adminJadwalView').classList.contains('hide')) applyFilterJadwal(); } await fetchAPI('simpanJadwalBaru', {tanggal:t, petugasId:p, wargaIds:wIds}); showLoading(false); showToast("Jadwal Diterbitkan!"); syncSemuaLatarBelakang(false); } catch(e){ showLoading(false); showToast("Gagal memproses", "error"); } }
         function bukaQR(kode, nama) { document.getElementById('qrNamaWarga').innerText=nama; document.getElementById('qrKodeWarga').innerText=kode; document.getElementById('qrImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=1f2937&data=${kode}`; document.getElementById('modalQR').classList.remove('hide'); }
