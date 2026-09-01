@@ -323,7 +323,30 @@
         </div>
     </div>
     
-    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"><div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl"><h3 class="font-black text-2xl mb-2">Jual ke Pengepul</h3><p class="mb-6 text-sm text-gray-500 bg-yellow-50 inline-block px-3 py-1 rounded-lg border">Gudang: <strong id="infoStokJual" class="text-yellow-600">0</strong> Kg</p><div class="space-y-4"><input type="number" id="addBeratJual" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border rounded-xl outline-none focus:border-primary" placeholder="0 Kg"><input type="number" id="addHargaJual" class="w-full p-3.5 border bg-gray-50 rounded-xl outline-none focus:border-primary" placeholder="Harga Jual per Kg (Rp)"><input type="text" id="addNamaPengepul" class="w-full p-3.5 border bg-gray-50 rounded-xl outline-none focus:border-primary" placeholder="Nama Pengepul"></div><div class="flex gap-3 mt-8"><button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border py-3.5 rounded-xl font-bold hover:bg-gray-50">Batal</button><button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black shadow-md hover:bg-gray-800 transition-colors">Proses Penjualan</button></div></div></div>
+    <div id="modalJualMinyak" class="hide fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h3 class="font-black text-2xl mb-2">Jual ke Pengepul</h3>
+            <p class="mb-6 text-sm text-gray-500 bg-yellow-50 inline-block px-3 py-1 rounded-lg border">Gudang: <strong id="infoStokJual" class="text-yellow-600">0</strong> Kg</p>
+            
+            <div class="space-y-4 mb-6">
+                <!-- Tambahkan oninput="kalkulasiTotalJual()" agar mendeteksi ketikan otomatis -->
+                <input type="number" step="0.1" id="addBeratJual" oninput="kalkulasiTotalJual()" class="w-full p-4 text-2xl font-black text-center bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary transition-colors shadow-inner" placeholder="0 Kg">
+                <input type="number" id="addHargaJual" oninput="kalkulasiTotalJual()" class="w-full p-3.5 border border-gray-200 bg-gray-50 rounded-xl outline-none focus:border-primary transition-colors shadow-inner" placeholder="Harga Jual per Kg (Rp)">
+                <input type="text" id="addNamaPengepul" class="w-full p-3.5 border border-gray-200 bg-gray-50 rounded-xl outline-none focus:border-primary transition-colors shadow-inner" placeholder="Nama Pengepul">
+            </div>
+
+            <!-- Box Total Otomatis -->
+            <div class="bg-gradient-to-br from-orange-400 to-orange-600 text-white p-4 rounded-2xl mb-6 shadow-md">
+                <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">Total Pendapatan</p>
+                <h3 class="text-3xl font-black" id="labelTotalJual">Rp 0</h3>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('modalJualMinyak')" class="w-1/3 bg-white border border-gray-200 py-3.5 rounded-xl font-bold hover:bg-gray-50 transition-colors">Batal</button>
+                <button onclick="submitJualMinyak()" class="w-2/3 bg-gray-900 text-white py-3.5 rounded-xl font-black shadow-md hover:bg-gray-800 transition-colors">Proses Penjualan</button>
+            </div>
+        </div>
+    </div>
     
     <div id="modalTransaksi" class="hide fixed inset-0 glass-overlay z-50 flex items-end sm:items-center justify-center p-4 sm:p-0"><div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto custom-scrollbar shadow-2xl"><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-black">Pengambilan</h3><button onclick="closeModal('modalTransaksi')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div class="bg-gray-50 p-4 rounded-2xl border mb-6 flex gap-4"><div class="bg-white w-12 h-12 rounded-full shadow-sm flex items-center justify-center"><i class="fas fa-home text-primary"></i></div><div><h4 class="font-black text-lg" id="modalWargaNama">-</h4><p id="modalWargaAlamat" class="text-xs text-gray-500 font-bold"></p></div></div><div class="grid grid-cols-2 gap-3 mb-6"><button onclick="setStatus('Sudah Diambil', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Minyak Ada</button><button onclick="setStatus('Tidak Ada Minyak', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Kosong</button><button onclick="setStatus('Warga Tidak Ada', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Tak Ada Org</button><button onclick="setStatus('Ditunda', this)" class="status-btn border py-3 rounded-2xl font-bold text-gray-500">Ditunda</button></div><div id="formAmbilMinyak" class="hide space-y-4 mb-8"><input type="number" step="0.1" id="inputBerat" oninput="kalkulasiHarga()" class="w-full text-4xl font-black text-center p-4 border-2 border-yellow-200 bg-yellow-50 rounded-2xl" placeholder="0.0"><div class="bg-gray-900 text-white p-5 rounded-2xl"><h3 class="text-3xl font-black text-center text-secondary mb-3" id="labelTotal">Rp0</h3><div class="flex justify-between text-xs pt-3 border-t border-gray-700"><div class="w-1/2 text-center border-r border-gray-700">Warga: <strong id="hakWarga"></strong></div><div class="w-1/2 text-center">Kas RT: <strong id="hakKas"></strong></div></div></div></div><button onclick="simpanKunjungan()" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg">SIMPAN DATA</button></div></div>
     
@@ -770,7 +793,19 @@
         function cetakQRSatu(kode, nama) { bukaJendelaCetak([{kode: kode, nama: nama}]); }
         function cetakQRSemua() { if(!adminDataMaster || !adminDataMaster.warga || adminDataMaster.warga.length === 0) return showToast("Tidak ada data warga", "error"); const dataCetak = adminDataMaster.warga.map(w => ({kode: w.Kode_Warga, nama: w.Nama_KK})); bukaJendelaCetak(dataCetak); }
         function bukaJendelaCetak(dataArr) { let html = `<html><head><title>Cetak QR Warga</title><style>body { font-family: 'Inter', sans-serif; text-align: center; padding: 20px; } .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; } .card { border: 2px dashed #ccc; padding: 15px; border-radius: 15px; width: 220px; page-break-inside: avoid; } .card img { width: 180px; height: 180px; margin: 0 auto; } .nama { font-weight: 900; margin-top: 15px; font-size: 18px; text-transform: uppercase; color: #111; } .kode { font-size: 14px; font-weight: bold; color: #ea580c; margin-top: 5px; letter-spacing: 2px; } @media print { @page { margin: 1cm; } body { padding: 0; } .card { border: 2px solid #000; } }</style></head><body><h2 style="margin-bottom:30px;">KARTU QR WARGA</h2><div class="grid">`; dataArr.forEach(d => { html += `<div class="card"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&data=${d.kode}"><div class="nama">${d.nama}</div><div class="kode">${d.kode}</div></div>`; }); html += `</div><script>setTimeout(() => { window.print(); }, 1500);<\/script></body></html>`; let win = window.open('', '_blank'); win.document.write(html); win.document.close(); }
-		function bukaModalJual() { const stok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0; if(stok <= 0) return showToast("Stok gudang masih kosong/0 Kg!", "error"); document.getElementById('infoStokJual').innerText = stok; document.getElementById('modalJualMinyak').classList.remove('hide'); }
+		function bukaModalJual() { 
+            const stok = cacheMutasi ? parseFloat(cacheMutasi.stokTersedia) : 0; 
+            if(stok <= 0) return showToast("Stok gudang masih kosong/0 Kg!", "error"); 
+            document.getElementById('infoStokJual').innerText = stok; 
+            
+            // Reset inputan form dan total saat modal dibuka
+            document.getElementById('addBeratJual').value = '';
+            document.getElementById('addHargaJual').value = '';
+            document.getElementById('addNamaPengepul').value = '';
+            document.getElementById('labelTotalJual').innerText = 'Rp 0';
+
+            document.getElementById('modalJualMinyak').classList.remove('hide'); 
+        }
         async function submitJualMinyak() { 
             const b = parseFloat(document.getElementById('addBeratJual').value);
             const p = document.getElementById('addNamaPengepul').value;
@@ -813,7 +848,15 @@
         function bukaKunjungan(t) { activeKunjungan=t; document.getElementById('modalWargaNama').innerText=t.Nama_KK; document.getElementById('modalWargaAlamat').innerText=t.Alamat; document.getElementById('modalTransaksi').classList.remove('hide'); }
         function setStatus(s, el) { selectedStatus=s; document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn border border-gray-200 text-gray-500 py-3 rounded-2xl font-bold transition-all'); el.className='status-btn bg-green-50 border-2 border-primary text-primary py-3 rounded-2xl font-black shadow-inner scale-95 transition-all'; document.getElementById('formAmbilMinyak').classList.toggle('hide', s!=='Sudah Diambil'); }
         function kalkulasiHarga() { const b=parseFloat(document.getElementById('inputBerat').value)||0, tot=b*systemSettings.Harga_Per_Kg; document.getElementById('labelTotal').innerText='Rp'+tot.toLocaleString('id-ID'); document.getElementById('hakWarga').innerText='Rp'+(tot*(systemSettings.Persentase_Warga/100)).toLocaleString('id-ID'); document.getElementById('hakKas').innerText='Rp'+(tot*(systemSettings.Persentase_Kas/100)).toLocaleString('id-ID'); }
-        async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); try { if(selectedStatus === 'Sudah Diambil') { let cachedStok = localStorage.getItem('globalStokCache'); if(cachedStok !== null) { let newStok = Number(cachedStok) + b; document.getElementById('taskMinyak').innerText = newStok % 1 === 0 ? newStok : newStok.toFixed(1); localStorage.setItem('globalStokCache', newStok); } } await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(true); showLoading(false); showToast("Kunjungan disimpan"); } catch(e){ showLoading(false); showToast("Gagal menyimpan ke server", "error"); } }
+        function kalkulasiTotalJual() {
+            const b = parseFloat(document.getElementById('addBeratJual').value) || 0;
+            const h = parseFloat(document.getElementById('addHargaJual').value) || 0;
+            const total = b * h;
+            
+            // Format angka menjadi format Rupiah (titik untuk ribuan)
+            document.getElementById('labelTotalJual').innerText = 'Rp ' + total.toLocaleString('id-ID');
+        }
+		async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); try { if(selectedStatus === 'Sudah Diambil') { let cachedStok = localStorage.getItem('globalStokCache'); if(cachedStok !== null) { let newStok = Number(cachedStok) + b; document.getElementById('taskMinyak').innerText = newStok % 1 === 0 ? newStok : newStok.toFixed(1); localStorage.setItem('globalStokCache', newStok); } } await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(true); showLoading(false); showToast("Kunjungan disimpan"); } catch(e){ showLoading(false); showToast("Gagal menyimpan ke server", "error"); } }
         let html5QrcodeScanner = null; function bukaScanner() { document.getElementById('modalScanner').classList.remove('hide'); if(!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(onScanSuccess); } } function tutupScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('modalScanner').classList.add('hide'); html5QrcodeScanner=null; } function onScanSuccess(t) { tutupScanner(); let f=currentTasks.find(x=>x.Kode_Warga===t && x.Status==='Belum Dikunjungi'); if(f) bukaKunjungan(f); else showToast("Kode salah / sudah diambil!", "error"); }
     </script>
 </body>
