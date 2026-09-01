@@ -139,7 +139,11 @@
                     </div>
                     <!-- Kartu 4: Total Penjualan -->
                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 sm:p-6 rounded-3xl shadow-lg relative overflow-hidden hover:-translate-y-1 transition-transform cursor-default">
-                        <div class="relative z-10"><p class="text-xs sm:text-sm font-semibold opacity-90">Total Terjual</p><h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-2 break-words"><span id="statTerjual">0</span> <span class="text-lg">Kg</span></h4></div>
+                        <div class="relative z-10">
+                            <p class="text-xs sm:text-sm font-semibold opacity-90">Total Terjual</p>
+                            <h4 class="text-3xl sm:text-4xl font-black mt-1 sm:mt-1.5 break-words leading-tight"><span id="statTerjual">0</span> <span class="text-lg">Kg</span></h4>
+                            <p class="text-[11px] sm:text-xs font-bold opacity-100 mt-1 bg-white/20 inline-block px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm" id="statPendapatan">Rp 0</p>
+                        </div>
                         <i class="fas fa-truck-loading absolute -bottom-4 -right-4 text-6xl sm:text-7xl opacity-20"></i>
                     </div>
                 </div>
@@ -389,7 +393,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyBqaz4G3oItd-cYtIFzg0UhMuxgKVE9_kIIntuHiImR2SYdUOQCbDdTVaS2dUvalJn/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyLoYQlk-sWJ8kD-HmLeYMDKnVeZtXpdBQzcS_vQEoOW3EqgMqQbpCG3jCmHuYfGpTX/exec";
         
         let currentUser = null, systemSettings = null, currentTasks = [];
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
@@ -713,6 +717,7 @@
             if(document.getElementById('statStok')) document.getElementById('statStok').innerText = data.stokTersedia || 0; 
             if(document.getElementById('statSaldo')) document.getElementById('statSaldo').innerText = 'Rp ' + (data.totalSaldoWarga || 0).toLocaleString('id-ID'); 
             if(document.getElementById('statTerjual')) document.getElementById('statTerjual').innerText = data.totalMinyakTerjual || 0;
+            if(document.getElementById('statPendapatan')) document.getElementById('statPendapatan').innerText = 'Rp ' + (data.totalPendapatanTerjual || 0).toLocaleString('id-ID');
         }
         function exportWarga() { if(!adminDataMaster) return showToast("Data belum siap", "error"); const ws = XLSX.utils.json_to_sheet(adminDataMaster.warga); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Warga"); XLSX.writeFile(wb, "Data_Warga_BankJelantah.xlsx"); }
         function exportMutasi() { if(!cacheMutasi) return showToast("Data belum siap", "error"); const ws = XLSX.utils.json_to_sheet(cacheMutasi.mutasi); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Mutasi"); XLSX.writeFile(wb, "Data_Mutasi_BankJelantah.xlsx"); }
@@ -830,9 +835,10 @@
                 if(cacheDashboard) { 
                     cacheDashboard.stokTersedia -= b; 
                     cacheDashboard.totalMinyakTerjual = (cacheDashboard.totalMinyakTerjual || 0) + b;
+                    cacheDashboard.totalPendapatanTerjual = (cacheDashboard.totalPendapatanTerjual || 0) + totalRp;
                     localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard)); 
                     if(!document.getElementById('adminDashboardView').classList.contains('hide')) renderDashboard(cacheDashboard); 
-                } 
+                }
                 await fetchAPI('simpanPenjualanMinyak', {berat:b, pengepul:p, harga:h}); 
                 showLoading(false); showToast("Minyak berhasil dijual!"); syncSemuaLatarBelakang(false); 
             } catch(e) { 
