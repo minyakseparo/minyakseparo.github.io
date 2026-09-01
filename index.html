@@ -523,7 +523,7 @@
                 if(res && res.success && res.settings) {
                     systemSettings = res.settings;
                     localStorage.setItem('systemSettings', JSON.stringify(systemSettings));
-                    applySystemSettingsUI(); // Terapkan pembaruan logo & nama
+                    applySystemSettingsUI(); 
                 }
             }).catch(e => console.log("Menunggu koneksi untuk sinkronisasi pengaturan..."));
 
@@ -535,20 +535,28 @@
                 if(currentUser.Role === 'Administrator') {
                     document.getElementById('adminArea').classList.remove('hide'); document.getElementById('adminName').innerText = currentUser.Nama_Lengkap;
                     
-                    let needsSync = false;
                     const cDash = localStorage.getItem('cacheDashboard'); const cMast = localStorage.getItem('adminDataMaster');
                     const cMut = localStorage.getItem('cacheMutasi'); const cJad = localStorage.getItem('cacheJadwal');
 
                     switchAdminTab('adminDashboardView');
 
-                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); } else { needsSync = true; }
-                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); } else { needsSync = true; }
-                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); } else { needsSync = true; }
-                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); } else { needsSync = true; }
+                    // Selalu render UI dari memori (jika ada) agar layar tidak kosong
+                    if(cDash && cDash !== "undefined") { cacheDashboard = JSON.parse(cDash); renderDashboard(cacheDashboard); }
+                    if(cMast && cMast !== "undefined") { adminDataMaster = JSON.parse(cMast); renderWarga(adminDataMaster.warga); }
+                    if(cMut && cMut !== "undefined") { cacheMutasi = JSON.parse(cMut); applyFilterMutasi(); renderChart(cacheMutasi.mutasi); }
+                    if(cJad && cJad !== "undefined") { cacheJadwal = JSON.parse(cJad); applyFilterJadwal(); }
 
-                    if(needsSync) syncSemuaLatarBelakang(false); 
+                    // KUNCI PERBAIKAN: Selalu tarik data baru secara diam-diam tiap kali refresh/buka aplikasi
+                    syncSemuaLatarBelakang(false); 
+
+                    // BONUS: Fitur "Live Update" otomatis setiap 60 detik
+                    setInterval(() => {
+                        syncSemuaLatarBelakang(false);
+                    }, 60000);
+
                 } else {
-                    document.getElementById('petugasView').classList.remove('hide'); loadPetugasTasks(); 
+                    document.getElementById('petugasView').classList.remove('hide'); 
+                    loadPetugasTasks(true); // Petugas selalu tarik data jadwal baru
                 }
             }
         }
