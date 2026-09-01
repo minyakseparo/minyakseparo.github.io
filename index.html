@@ -393,7 +393,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxhCsjpKYlDZ-9WRzJpw7MRlgpKjHnHl6gK3-1Mc9c3qa0ig9yznFGy_u25icL_-sr8/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwqojPtcUflC4-QIFOw6me6-C4npfpacQmIe-bSocHfruD1Q1h0xfpUfZ-CY3klcEfQ/exec";
         
         let currentUser = null, systemSettings = null, currentTasks = [];
         let cacheDashboard = null, adminDataMaster = null, cacheJadwal = null, cacheMutasi = null;
@@ -563,14 +563,26 @@
 
         async function syncSemuaLatarBelakang(isManual = false) {
             if(isManual) showLoading(true);
-            let errorCount = 0;
-            try { const resDash = await fetchAPI('getAdminDashboard'); if(resDash && resDash.totalWarga !== undefined) { cacheDashboard = resDash; localStorage.setItem('cacheDashboard', JSON.stringify(resDash)); } } catch(e) { errorCount++; }
-            try { const resMast = await fetchAPI('getAdminMasterData'); if(resMast && resMast.warga) { adminDataMaster = resMast; localStorage.setItem('adminDataMaster', JSON.stringify(resMast)); } } catch(e) { errorCount++; }
-            try { const resMut = await fetchAPI('getAdminMutasiData'); if(resMut && resMut.mutasi) { cacheMutasi = resMut; localStorage.setItem('cacheMutasi', JSON.stringify(resMut)); } } catch(e) { errorCount++; }
-            try { const resJad = await fetchAPI('getAdminJadwalData'); if(resJad && resJad.jadwal) { cacheJadwal = resJad; localStorage.setItem('cacheJadwal', JSON.stringify(resJad)); } } catch(e) { errorCount++; }
+            try { 
+                // Sekarang hanya butuh 1x request untuk mengambil SEMUA data Admin
+                const res = await fetchAPI('syncAllAdminData');
+                if (res && res.success) {
+                    if (res.dashboard) { cacheDashboard = res.dashboard; localStorage.setItem('cacheDashboard', JSON.stringify(cacheDashboard)); }
+                    if (res.masterData) { adminDataMaster = res.masterData; localStorage.setItem('adminDataMaster', JSON.stringify(adminDataMaster)); }
+                    if (res.mutasiData) { cacheMutasi = res.mutasiData; localStorage.setItem('cacheMutasi', JSON.stringify(cacheMutasi)); }
+                    if (res.jadwalData) { cacheJadwal = res.jadwalData; localStorage.setItem('cacheJadwal', JSON.stringify(cacheJadwal)); }
 
-            const tabAktif = document.querySelector('.admin-tab:not(.hide)').id; switchAdminTab(tabAktif);
-            if(isManual) { showLoading(false); if(errorCount > 0) showToast("Proses selesai, namun Google membatasi data.", "error"); else showToast("Semua data berhasil diperbarui!"); }
+                    // Perbarui tampilan layar secara instan
+                    const tabAktif = document.querySelector('.admin-tab:not(.hide)');
+                    if(tabAktif) switchAdminTab(tabAktif.id);
+                    
+                    if(isManual) { showLoading(false); showToast("Semua data berhasil diperbarui dengan cepat!"); }
+                } else {
+                    if(isManual) { showLoading(false); showToast("Gagal memperbarui data.", "error"); }
+                }
+            } catch(e) { 
+                if(isManual) { showLoading(false); showToast("Koneksi gagal. Coba lagi.", "error"); }
+            }
         }
 
         async function doLogin() {
