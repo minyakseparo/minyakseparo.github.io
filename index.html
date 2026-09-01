@@ -863,7 +863,51 @@
             document.getElementById('labelTotalJual').innerText = 'Rp ' + total.toLocaleString('id-ID');
         }
 		async function simpanKunjungan() { if(!selectedStatus)return showToast("Pilih status!","error"); let b=0; if(selectedStatus==='Sudah Diambil'){ b=parseFloat(document.getElementById('inputBerat').value); if(!b) return showToast("Isi berat!", "error"); } closeModal('modalTransaksi'); showLoading(true); try { if(selectedStatus === 'Sudah Diambil') { let cachedStok = localStorage.getItem('globalStokCache'); if(cachedStok !== null) { let newStok = Number(cachedStok) + b; document.getElementById('taskMinyak').innerText = newStok % 1 === 0 ? newStok : newStok.toFixed(1); localStorage.setItem('globalStokCache', newStok); } } await fetchAPI('simpanPengambilan', {idKunjungan:activeKunjungan.ID_Kunjungan, rowIndexKunjungan:activeKunjungan._rowIndex, kodeWarga:activeKunjungan.Kode_Warga, status:selectedStatus, berat:b}); await loadPetugasTasks(true); showLoading(false); showToast("Kunjungan disimpan"); } catch(e){ showLoading(false); showToast("Gagal menyimpan ke server", "error"); } }
-        let html5QrcodeScanner = null; function bukaScanner() { document.getElementById('modalScanner').classList.remove('hide'); if(!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(onScanSuccess); } } function tutupScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('modalScanner').classList.add('hide'); html5QrcodeScanner=null; } function onScanSuccess(t) { tutupScanner(); let f=currentTasks.find(x=>x.Kode_Warga===t && x.Status==='Belum Dikunjungi'); if(f) bukaKunjungan(f); else showToast("Kode salah / sudah diambil!", "error"); }
+        // ================= SCRIPT QR SCANNER OTOMATIS =================
+        let html5QrCode = null; 
+
+        function bukaScanner() { 
+            document.getElementById('modalScanner').classList.remove('hide'); 
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            // Konfigurasi area scan
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            // Memaksa menggunakan kamera belakang ("environment")
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                onScanSuccess,
+                (errorMessage) => { /* abaikan error pencarian frame per frame */ }
+            ).catch((err) => {
+                showToast("Gagal mengakses kamera atau izin ditolak.", "error");
+            });
+        } 
+
+        function tutupScanner() { 
+            document.getElementById('modalScanner').classList.add('hide'); 
+            if (html5QrCode) { 
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(err => {
+                    console.log("Gagal menghentikan kamera", err);
+                });
+            } 
+        } 
+
+        function onScanSuccess(t) { 
+            tutupScanner(); 
+            let f = currentTasks.find(x => x.Kode_Warga === t && x.Status === 'Belum Dikunjungi'); 
+            if(f) {
+                bukaKunjungan(f); 
+            } else {
+                showToast("Kode salah / sudah diambil!", "error"); 
+            }
+        }
     </script>
 </body>
 </html>
